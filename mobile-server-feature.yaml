@@ -1,0 +1,92 @@
+Project: PHP Mobile Web Server
+
+Title: Mobile Web Server
+Subtitle: Created by: @andikariskys
+
+# List of features
+Dashboard:
+  - Informasi Perangkat:
+    - Nama Perangkat
+    - Model Perangkat
+    - Android Version
+    - Hardware Model 
+    - Uptime
+  - Informasi Memori:
+    - Total Memory
+    - Available Memory
+    - Used Memory
+    - Total Swap
+    - Available Swap
+    - Used Swap
+  - Informasi Storage:
+    - Internal:
+      - Total Storage
+      - Available Storage
+      - Used Storage
+    - SD Card:
+      - Total Storage
+      - Available Storage
+      - Used Storage
+  - Informasi Battery:
+    - Battery Level
+    - Charging Status
+    - Temperature
+  - Informasi Operator:
+    - Operator Name
+    - PCI
+    - RSSI
+    - RSRP
+    - RSRQ
+    - SINR
+File Manager:
+  - Gunakan Tiny File Manager untuk mengelola file di perangkat
+Device Control:
+  - Reboot Device
+  - Shutdown Device
+  - Clear Cache
+Network:
+  - WiFi:
+    - Check WiFi Status
+    - Enable WiFi
+    - Disable WiFi
+  - Mobile Data:
+    - Check Mobile Data Status
+    - Enable Mobile Data
+    - Disable Mobile Data
+  - Airplane Mode:
+    - Check Airplane Mode Status
+    - Enable Airplane Mode
+    - Disable Airplane Mode
+  - Bluetooth:
+    - Check Bluetooth Status
+    - Enable Bluetooth
+    - Disable Bluetooth
+  - Static IP Configuration:
+    - Set Static IP Gateway
+    - View Current IP Configuration
+SMS:
+  - Send SMS:
+    - Enter Recipient Number
+    - Enter Message
+    - Send
+  - View Inbox:
+    - List Received Messages
+    - List Sent Messages
+    - Read Message
+Notification:
+  - List All Notifications
+  - Read Notification
+  - Clear Notification
+Camera:
+  - Capture Photo (front/back camera)
+Audio:
+  - TTS (Text-to-Speech):
+    - Enter Text
+    - Select Voice
+    - Play Audio
+Location:
+  - Current Location:
+    - Gunakan Leaflet.js untuk menampilkan lokasi saat ini di peta
+Settings:
+  - Change Username & Password Login
+  - Upload Image for Dashboard Background

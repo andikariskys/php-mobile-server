@@ -7,9 +7,9 @@ Subtitle: Created by: @andikariskys
 Dashboard:
   - Informasi Perangkat:
     - Nama Perangkat
-    - Model Perangkat
+    - Codename Perangkat
     - Android Version
-    - Hardware Model 
+    - Hardware Model (Ex: Qualcomm MSM8919)
     - Uptime
   - Informasi Memori:
     - Total Memory
@@ -18,6 +18,11 @@ Dashboard:
     - Total Swap
     - Available Swap
     - Used Swap
+  - Informasi CPU:
+    - CPU Model
+    - CPU Cores
+    - CPU Frequency
+    - CPU Usage
   - Informasi Storage:
     - Internal:
       - Total Storage

@@ -17,20 +17,11 @@ $db->exec("CREATE TABLE IF NOT EXISTS settings (
 $defaults = [
     'username' => 'admin',
     'password' => 'admin',
-    'ip_camera_port' => '4444',
+    'ip_camera_port' => '',
     'ip_camera_url' => '',
-    'terminal_port' => '3001',
+    'terminal_port' => '',
     'terminal_url' => '',
-    'dashboard_bg' => '',
-    'use_prefix' => '0',
-    'ip_address' => '192.168.1.100',
-    'subnet_mask' => '255.255.255.0',
-    'volume_call' => '50',
-    'volume_system' => '50',
-    'volume_ring' => '50',
-    'volume_music' => '50',
-    'volume_alarm' => '50',
-    'volume_notification' => '50'
+    'dashboard_bg' => ''
 ];
 
 foreach ($defaults as $key => $val) {

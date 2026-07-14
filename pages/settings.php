@@ -14,8 +14,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $new_pass = isset($_POST['new_password']) ? trim($_POST['new_password']) : '';
         
         if (!empty($new_user) && !empty($new_pass)) {
-            db_set('username', $new_user);
-            db_set('password', $new_pass);
+            $device->setDbSetting('username', $new_user);
+            $device->setDbSetting('password', $new_pass);
             $auth_success = 'Kredensial login berhasil diperbarui di database!';
         } else {
             $auth_error = 'Username dan Password tidak boleh kosong.';
@@ -40,7 +40,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 
                 if (move_uploaded_file($file_tmp, $dest_file)) {
                     $bg_path = '/assets/uploads/bg_custom.jpg?t=' . time();
-                    db_set('dashboard_bg', $bg_path);
+                    $device->setDbSetting('dashboard_bg', $bg_path);
                     $bg_success = 'Gambar latar belakang berhasil diunggah dan diterapkan!';
                 } else {
                     $bg_error = 'Gagal menyimpan file ke folder assets.';
@@ -55,7 +55,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     
     // 3. Reset Background
     if (isset($_POST['action']) && $_POST['action'] === 'reset_bg') {
-        db_set('dashboard_bg', '');
+        $device->setDbSetting('dashboard_bg', '');
         $bg_success = 'Latar belakang berhasil di-reset ke default gradient.';
     }
 
@@ -66,22 +66,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $term_port = isset($_POST['terminal_port']) ? trim($_POST['terminal_port']) : '';
         $term_url = isset($_POST['terminal_url']) ? trim($_POST['terminal_url']) : '';
         
-        db_set('ip_camera_port', $ip_cam_port);
-        db_set('ip_camera_url', $ip_cam_url);
-        db_set('terminal_port', $term_port);
-        db_set('terminal_url', $term_url);
+        $device->setDbSetting('ip_camera_port', $ip_cam_port);
+        $device->setDbSetting('ip_camera_url', $ip_cam_url);
+        $device->setDbSetting('terminal_port', $term_port);
+        $device->setDbSetting('terminal_url', $term_url);
         
         $integration_success = 'Konfigurasi IP Camera dan Terminal berhasil disimpan!';
     }
 }
 
-// Load data from DB
-$db_user = db_get('username', 'admin');
-$bg_path = db_get('dashboard_bg', '');
-$ip_camera_url = db_get('ip_camera_url', '');
-$ip_camera_port = db_get('ip_camera_port', '4444');
-$terminal_url = db_get('terminal_url', '');
-$terminal_port = db_get('terminal_port', '3001');
+// Load data from DB via Controller
+$db_user = $device->getDbSetting('username', 'admin');
+$bg_path = $device->getDbSetting('dashboard_bg', '');
+$ip_camera_url = $device->getDbSetting('ip_camera_url', '');
+$ip_camera_port = $device->getDbSetting('ip_camera_port', '4444');
+$terminal_url = $device->getDbSetting('terminal_url', '');
+$terminal_port = $device->getDbSetting('terminal_port', '3001');
 ?>
 
 <div class="row g-4">

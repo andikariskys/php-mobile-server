@@ -1,16 +1,49 @@
 <?php
+// Handle real camera capture via Termux API
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'capture') {
+    $cam_id = isset($_POST['camera_id']) ? $_POST['camera_id'] : '0';
+    
+    // Save to webroot assets folder
+    $uploadDir = __DIR__ . '/../assets/uploads/snapshots';
+    if (!is_dir($uploadDir)) {
+        mkdir($uploadDir, 0777, true);
+    }
+    
+    $fileName = 'IMG_' . date('Ymd_His') . '.jpg';
+    $filePath = $uploadDir . '/' . $fileName;
+    
+    $res = $device->capturePhoto($cam_id, $filePath);
+    
+    header('Content-Type: application/json');
+    if ($res && file_exists($filePath)) {
+        echo json_encode([
+            'success' => true,
+            'filename' => $fileName,
+            'device_path' => '/sdcard/Pictures/MobileServer/' . $fileName,
+            'server_path' => realpath($filePath),
+            'url' => 'assets/uploads/snapshots/' . $fileName,
+            'time' => date('d/m/Y H:i:s')
+        ]);
+    } else {
+        echo json_encode([
+            'success' => false,
+            'message' => 'Gagal mengambil foto via Termux API.'
+        ]);
+    }
+    exit;
+}
+
 // Automatic URL/Port resolution based on access method
 $hostname = $_SERVER['HTTP_HOST']; 
 $host_only = parse_url('http://' . $hostname, PHP_URL_HOST);
 
-// Check if accessing via IP
 $is_ip = filter_var($host_only, FILTER_VALIDATE_IP) || 
          $host_only === 'localhost' || 
          $host_only === '127.0.0.1' || 
          preg_match('/^\d{1,3}(\.\d{1,3}){3}$/', $host_only);
 
-$cam_port = db_get('ip_camera_port', '4444');
-$cam_url = db_get('ip_camera_url', '');
+$cam_port = $device->getDbSetting('ip_camera_port', '4444');
+$cam_url = $device->getDbSetting('ip_camera_url', '');
 
 $resolved_camera_url = '';
 $mode_info = '';
@@ -37,6 +70,9 @@ if ($is_ip) {
         $warning_alert = true;
     }
 }
+
+// Get camera info from DeviceController
+$cameras = $device->getCameraInfo();
 ?>
 
 <div class="row g-4">
@@ -91,6 +127,18 @@ if ($is_ip) {
                 <div class="shutter-flash" id="shutterFlash"></div>
             </div>
 
+            <!-- Camera Selection -->
+            <div class="row g-3 mb-4 align-items-center justify-content-center">
+                <div class="col-12 col-sm-6 col-md-4 text-center">
+                    <label class="form-label text-secondary fs-8 ms-1">Pilih Kamera Perangkat (Termux)</label>
+                    <select id="cameraSelect" class="form-select form-glass fs-8 text-center mx-auto" style="max-width: 250px;">
+                        <?php foreach ($cameras as $cam): ?>
+                            <option value="<?= htmlspecialchars($cam['id']) ?>">Kamera <?= htmlspecialchars($cam['id']) ?> (<?= htmlspecialchars($cam['facing']) ?>)</option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+            </div>
+
             <!-- Camera Operations -->
             <div class="d-flex justify-content-center align-items-center flex-wrap gap-3">
                 <button class="btn btn-primary-gradient py-2.5 px-4 rounded-10 font-weight-600 d-flex align-items-center gap-2" onclick="captureIpCamPhoto()">
@@ -111,7 +159,7 @@ if ($is_ip) {
         </div>
     </div>
 
-    <!-- Capture Preview Section (Replaced gallery grid with single large image box and location path info) -->
+    <!-- Capture Preview Section -->
     <div class="col-12 d-none" id="camPreviewCardSection">
         <div class="glass-card" id="latestCaptureCard" style="display:none;">
             <div class="d-flex align-items-center gap-2 mb-4">
@@ -295,6 +343,45 @@ if ($is_ip) {
             }, 400);
         }
 
+        const camSelect = document.getElementById('cameraSelect');
+        const camId = camSelect ? camSelect.value : '0';
+        
+        let formData = new FormData();
+        formData.append('action', 'capture');
+        formData.append('camera_id', camId);
+        
+        const querySep = window.location.search ? '&' : '?';
+        fetch(window.location.pathname + window.location.search + querySep + 'api=1', {
+            method: 'POST',
+            body: formData
+        })
+        .then(res => res.json())
+        .then(res => {
+            if (res.success) {
+                // Real capture succeeded
+                document.getElementById('latestCapturePlaceholder').classList.add('d-none');
+                document.getElementById('latestCaptureCard').style.display = 'block';
+                
+                const img = document.getElementById('latestCaptureImg');
+                img.src = res.url;
+                
+                document.getElementById('imgMetaName').textContent = res.filename;
+                document.getElementById('imgMetaTime').textContent = res.time;
+                document.getElementById('imgMetaDevicePath').textContent = res.device_path;
+                document.getElementById('imgMetaServerPath').textContent = res.server_path;
+            } else {
+                // Fallback to mock canvas if Termux fails
+                console.log(res.message);
+                captureMockPhoto();
+            }
+        })
+        .catch(err => {
+            console.error('Fetch error:', err);
+            captureMockPhoto();
+        });
+    }
+
+    function captureMockPhoto() {
         const canvas = document.getElementById('mock-canvas');
         const ctx = canvas.getContext('2d');
         
@@ -336,7 +423,7 @@ if ($is_ip) {
 
         ctx.fillStyle = '#ffffff';
         ctx.font = '28px Outfit';
-        ctx.fillText('IP CAMERA SNAPSHOT', 60, 80);
+        ctx.fillText('IP CAMERA SNAPSHOT (FALLBACK)', 60, 80);
         
         ctx.fillStyle = '#34d399';
         ctx.font = '20px monospace';
@@ -346,22 +433,19 @@ if ($is_ip) {
         ctx.font = '20px monospace';
         const now = new Date();
         ctx.fillText(`TIME: ${now.toLocaleDateString()} ${now.toLocaleTimeString()}`, 60, canvas.height - 60);
-        ctx.fillText(`CAM_ID: IP-CAM-01`, canvas.width - 240, 80);
+        ctx.fillText(`CAM_ID: MOCK-CAM-01`, canvas.width - 240, 80);
 
         const dataUrl = canvas.toDataURL('image/jpeg');
         updateLatestCapture(dataUrl);
     }
 
     function updateLatestCapture(dataUrl) {
-        // Hide placeholder and show card
         document.getElementById('latestCapturePlaceholder').classList.add('d-none');
         document.getElementById('latestCaptureCard').style.display = 'block';
         
-        // Update image
         const img = document.getElementById('latestCaptureImg');
         img.src = dataUrl;
         
-        // Generate filenames and paths
         const now = new Date();
         const timestamp = now.getTime();
         const dateStr = now.toLocaleDateString('id-ID', { day: '2-digit', month: '2-digit', year: 'numeric' }) + ' ' + now.toLocaleTimeString('id-ID');
@@ -370,7 +454,6 @@ if ($is_ip) {
         const devicePath = `/storage/emulated/0/Pictures/MobileServer/${fileName}`;
         const serverPath = `D:\\mobile-server\\assets\\uploads\\snapshots\\${fileName}`;
         
-        // Update metadata
         document.getElementById('imgMetaName').textContent = fileName;
         document.getElementById('imgMetaTime').textContent = dateStr;
         document.getElementById('imgMetaDevicePath').textContent = devicePath;

@@ -8,6 +8,11 @@ session_start();
 // Include database helper
 require_once __DIR__ . '/db.php';
 
+// Include and instantiate DeviceController
+require_once __DIR__ . '/controllers/DeviceController.php';
+$device = new DeviceController(true, true); // root/su enabled, termux api enabled
+
+
 // Get page from query string
 $page = isset($_GET['page']) ? trim($_GET['page']) : '';
 

@@ -1,3 +1,22 @@
+<?php
+// Handle AJAX requests for dashboard stats
+if (isset($_GET['api']) && $_GET['api'] == '1') {
+    header('Content-Type: application/json');
+    echo json_encode($device->getDashboardData());
+    exit;
+}
+
+$dashData = $device->getDashboardData();
+$dev = $dashData['device'];
+$cpu = $dashData['cpu'];
+$bat = $dashData['battery'];
+$mem = $dashData['memory'];
+$gpu = $dashData['gpu'];
+$sim = $dashData['sim'];
+$net = $dashData['network'];
+$storage = $dashData['storage'];
+?>
+
 <div class="row g-4">
     <!-- Stat Cards Header Row -->
     <div class="col-12 col-md-6 col-lg-3">
@@ -6,7 +25,7 @@
                 <i class="fi fi-sr-cpu"></i>
             </div>
             <div>
-                <div class="stat-value" id="cpuUsageVal">24.5%</div>
+                <div class="stat-value" id="cpuUsageVal"><?= $cpu['usage'] !== 'N/A' ? number_format((float)$cpu['usage'], 1) . '%' : 'N/A' ?></div>
                 <div class="stat-label">CPU Usage</div>
             </div>
         </div>
@@ -18,8 +37,7 @@
                 <i class="fi fi-sr-database"></i>
             </div>
             <div>
-                <!-- Changed RAM Used to 1.2 GB -->
-                <div class="stat-value" id="ramUsageVal">1.2 GB</div>
+                <div class="stat-value" id="ramUsageVal"><?= htmlspecialchars($mem['ram']['used_formatted']) ?></div>
                 <div class="stat-label">Used Memory (RAM)</div>
             </div>
         </div>
@@ -31,8 +49,8 @@
                 <i class="fi fi-sr-bolt"></i>
             </div>
             <div>
-                <div class="stat-value" id="batteryLevelVal">78%</div>
-                <div class="stat-label">Baterai (Charging)</div>
+                <div class="stat-value" id="batteryLevelVal"><?= $bat['level'] !== 'N/A' ? $bat['level'] . '%' : 'N/A' ?></div>
+                <div class="stat-label">Baterai (<?= htmlspecialchars($bat['status']) ?>)</div>
             </div>
         </div>
     </div>
@@ -43,9 +61,8 @@
                 <i class="fi fi-sr-wifi"></i>
             </div>
             <div>
-                <!-- Changed Operator to XL -->
-                <div class="stat-value">XL</div>
-                <div class="stat-label">Operator LTE</div>
+                <div class="stat-value" id="statOperatorVal"><?= htmlspecialchars($sim['active_operator']) ?></div>
+                <div class="stat-label" id="statOperatorLabel">SIM Data: SIM <?= htmlspecialchars($sim['active_data_sim']) ?></div>
             </div>
         </div>
     </div>
@@ -64,28 +81,31 @@
                     <tbody>
                         <tr class="border-bottom border-white border-opacity-5">
                             <td class="text-secondary py-2.5 ps-0">Nama Perangkat</td>
-                            <!-- Changed to Xiaomi Redmi 4A -->
-                            <td class="text-end py-2.5 pe-0 font-weight-500">Xiaomi Redmi 4A</td>
+                            <td class="text-end py-2.5 pe-0 font-weight-500"><?= htmlspecialchars($dev['display_name']) ?></td>
                         </tr>
                         <tr class="border-bottom border-white border-opacity-5">
                             <td class="text-secondary py-2.5 ps-0">Codename Perangkat</td>
-                            <!-- Changed to rolex -->
-                            <td class="text-end py-2.5 pe-0 font-weight-500">rolex</td>
+                            <td class="text-end py-2.5 pe-0 font-weight-500"><?= htmlspecialchars($dev['codename']) ?></td>
                         </tr>
                         <tr class="border-bottom border-white border-opacity-5">
                             <td class="text-secondary py-2.5 ps-0">Android Version</td>
-                            <!-- Changed to Android 10 -->
-                            <td class="text-end py-2.5 pe-0 font-weight-500">Android 10</td>
+                            <td class="text-end py-2.5 pe-0 font-weight-500">Android <?= htmlspecialchars($dev['android_version']) ?></td>
                         </tr>
                         <tr class="border-bottom border-white border-opacity-5">
                             <td class="text-secondary py-2.5 ps-0">Hardware Model</td>
-                            <!-- Changed to Qualcomm MSM8917 -->
-                            <td class="text-end py-2.5 pe-0 font-weight-500">Qualcomm Snapdragon 425 (MSM8917)</td>
+                            <td class="text-end py-2.5 pe-0 font-weight-500"><?= htmlspecialchars($dev['hardware_model']) ?></td>
+                        </tr>
+                        <tr class="border-bottom border-white border-opacity-5">
+                            <td class="text-secondary py-2.5 ps-0">SIM 1 Operator</td>
+                            <td class="text-end py-2.5 pe-0 font-weight-500 text-info" id="infoSim1Operator"><?= htmlspecialchars($dev['sim1_operator']) ?></td>
+                        </tr>
+                        <tr class="border-bottom border-white border-opacity-5">
+                            <td class="text-secondary py-2.5 ps-0">SIM 2 Operator</td>
+                            <td class="text-end py-2.5 pe-0 font-weight-500 text-info" id="infoSim2Operator"><?= htmlspecialchars($dev['sim2_operator']) ?></td>
                         </tr>
                         <tr>
                             <td class="text-secondary py-2.5 ps-0">Uptime</td>
-                            <!-- Changed to static 05h 12m 43s -->
-                            <td class="text-end py-2.5 pe-0 font-weight-500" id="uptimeVal">05h 12m 43s</td>
+                            <td class="text-end py-2.5 pe-0 font-weight-500" id="uptimeVal"><?= htmlspecialchars($dev['uptime_formatted']) ?></td>
                         </tr>
                     </tbody>
                 </table>
@@ -104,26 +124,31 @@
             <div class="mb-4">
                 <div class="d-flex justify-content-between mb-1.5 fs-7">
                     <span class="text-secondary">CPU Usage (Core Load)</span>
-                    <span class="text-primary-gradient font-weight-600" id="cpuUsageText">24.5%</span>
+                    <span class="text-primary-gradient font-weight-600" id="cpuUsageText"><?= $cpu['usage'] !== 'N/A' ? number_format((float)$cpu['usage'], 1) . '%' : 'N/A' ?></span>
                 </div>
                 <div class="progress bg-white bg-opacity-10" style="height: 8px; border-radius: 4px;">
-                    <div id="cpuUsageBar" class="progress-bar bg-primary-gradient" role="progressbar" style="width: 24.5%; border-radius: 4px; transition: width 1s ease;"></div>
+                    <div id="cpuUsageBar" class="progress-bar bg-primary-gradient" role="progressbar" style="width: <?= $cpu['usage'] !== 'N/A' ? (float)$cpu['usage'] : 0 ?>%; border-radius: 4px; transition: width 1s ease;"></div>
                 </div>
-                <!-- Changed to Cortex-A53 (4 Cores) @ 1.40 GHz -->
-                <div class="fs-8 text-secondary mt-1">Model: Cortex-A53 (4 Cores) @ 1.40 GHz</div>
+                <div class="fs-8 text-secondary mt-1">Model: <?= htmlspecialchars($cpu['model']) ?> (<?= $cpu['core_count'] ?> Cores)</div>
             </div>
 
             <div class="row g-3">
                 <div class="col-6">
                     <div class="p-3 bg-black bg-opacity-20 rounded-12 border border-white border-opacity-5">
                         <div class="text-secondary fs-8 mb-1">Status Baterai</div>
-                        <div class="text-white font-weight-600 fs-6" id="batteryStatusText">Charging</div>
+                        <div class="text-white font-weight-600 fs-6" id="batteryStatusText"><?= htmlspecialchars($bat['status']) ?></div>
                     </div>
                 </div>
                 <div class="col-6">
                     <div class="p-3 bg-black bg-opacity-20 rounded-12 border border-white border-opacity-5">
-                        <div class="text-secondary fs-8 mb-1">Suhu Baterai</div>
-                        <div class="text-warning font-weight-600 fs-6" id="batteryTempText">32.4 °C</div>
+                        <div class="text-secondary fs-8 mb-1">Suhu & Tegangan</div>
+                        <div class="text-warning font-weight-600 fs-6" id="batteryTempText">
+                            <?php if ($bat['temperature'] !== 'N/A'): ?>
+                                <?= number_format((float)$bat['temperature'], 1) ?> °C &nbsp;<span class="text-white fs-8 font-weight-400"><?= number_format((float)$bat['voltage'], 2) ?>V</span>
+                            <?php else: ?>
+                                N/A
+                            <?php endif; ?>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -140,33 +165,45 @@
                 <h5 class="mb-0 text-white font-weight-600">Informasi Memori (RAM / Swap)</h5>
             </div>
             
-            <!-- RAM Progress - Changed to 2GB Total -->
+            <!-- RAM Progress -->
             <div class="mb-4">
                 <div class="d-flex justify-content-between mb-1 fs-7">
                     <span class="text-white font-weight-500">RAM Memory</span>
-                    <span class="text-secondary" id="ramDetailText">1.2 GB / 2.0 GB (60.0%)</span>
+                    <span class="text-secondary" id="ramDetailText">
+                        <?php if ($mem['ram']['total_formatted'] !== 'N/A'): ?>
+                            <?= htmlspecialchars($mem['ram']['used_formatted']) ?> / <?= htmlspecialchars($mem['ram']['total_formatted']) ?> (<?= htmlspecialchars($mem['ram']['percent']) ?>%)
+                        <?php else: ?>
+                            N/A
+                        <?php endif; ?>
+                    </span>
                 </div>
                 <div class="progress bg-white bg-opacity-10" style="height: 10px; border-radius: 5px;">
-                    <div id="ramBar" class="progress-bar bg-success" role="progressbar" style="width: 60.0%; border-radius: 5px; transition: width 1s ease;"></div>
+                    <div id="ramBar" class="progress-bar bg-success" role="progressbar" style="width: <?= $mem['ram']['percent'] ?>%; border-radius: 5px; transition: width 1s ease;"></div>
                 </div>
                 <div class="d-flex justify-content-between fs-8 text-secondary mt-1">
-                    <span id="ramUsedLabel">Used: 1.2 GB</span>
-                    <span id="ramAvailLabel">Available: 0.8 GB</span>
+                    <span id="ramUsedLabel">Used: <?= htmlspecialchars($mem['ram']['used_formatted']) ?></span>
+                    <span id="ramAvailLabel">Available: <?= htmlspecialchars($mem['ram']['available_formatted']) ?></span>
                 </div>
             </div>
 
-            <!-- Swap Progress - Changed to 2GB Total -->
+            <!-- Swap Progress -->
             <div>
                 <div class="d-flex justify-content-between mb-1 fs-7">
                     <span class="text-white font-weight-500">Swap Space</span>
-                    <span class="text-secondary">0.5 GB / 2.0 GB (25.0%)</span>
+                    <span class="text-secondary" id="swapDetailText">
+                        <?php if ($mem['swap']['total_formatted'] !== 'N/A'): ?>
+                            <?= htmlspecialchars($mem['swap']['used_formatted']) ?> / <?= htmlspecialchars($mem['swap']['total_formatted']) ?> (<?= htmlspecialchars($mem['swap']['percent']) ?>%)
+                        <?php else: ?>
+                            N/A
+                        <?php endif; ?>
+                    </span>
                 </div>
                 <div class="progress bg-white bg-opacity-10" style="height: 10px; border-radius: 5px;">
-                    <div class="progress-bar bg-info" role="progressbar" style="width: 25.0%; border-radius: 5px;"></div>
+                    <div id="swapBar" class="progress-bar bg-info" role="progressbar" style="width: <?= $mem['swap']['percent'] ?>%; border-radius: 5px; transition: width 1s ease;"></div>
                 </div>
                 <div class="d-flex justify-content-between fs-8 text-secondary mt-1">
-                    <span>Used: 0.5 GB</span>
-                    <span>Available: 1.5 GB</span>
+                    <span id="swapUsedLabel">Used: <?= htmlspecialchars($mem['swap']['used_formatted']) ?></span>
+                    <span id="swapAvailLabel">Available: <?= htmlspecialchars($mem['swap']['available_formatted']) ?></span>
                 </div>
             </div>
         </div>
@@ -180,18 +217,18 @@
                 <h5 class="mb-0 text-white font-weight-600">Informasi Storage</h5>
             </div>
             
-            <!-- Internal Storage - Changed to 32GB -->
+            <!-- Internal Storage -->
             <div class="mb-4">
                 <div class="d-flex justify-content-between mb-1 fs-7">
                     <span class="text-white font-weight-500">Internal Storage</span>
-                    <span class="text-secondary">20.5 GB / 32.0 GB (64.0%)</span>
+                    <span class="text-secondary"><?= htmlspecialchars($storage['internal']['used_formatted']) ?> / <?= htmlspecialchars($storage['internal']['total_formatted']) ?> (<?= htmlspecialchars($storage['internal']['percent']) ?>%)</span>
                 </div>
                 <div class="progress bg-white bg-opacity-10" style="height: 10px; border-radius: 5px;">
-                    <div class="progress-bar bg-info" role="progressbar" style="width: 64.0%; border-radius: 5px;"></div>
+                    <div class="progress-bar bg-info" role="progressbar" style="width: <?= $storage['internal']['percent'] ?>%; border-radius: 5px;"></div>
                 </div>
                 <div class="d-flex justify-content-between fs-8 text-secondary mt-1">
-                    <span>Used: 20.5 GB</span>
-                    <span>Available: 11.5 GB</span>
+                    <span>Used: <?= htmlspecialchars($storage['internal']['used_formatted']) ?></span>
+                    <span>Available: <?= htmlspecialchars($storage['internal']['available_formatted']) ?></span>
                 </div>
             </div>
 
@@ -199,14 +236,14 @@
             <div>
                 <div class="d-flex justify-content-between mb-1 fs-7">
                     <span class="text-white font-weight-500">SD Card Storage</span>
-                    <span class="text-secondary">12.1 GB / 64.0 GB (18.9%)</span>
+                    <span class="text-secondary"><?= htmlspecialchars($storage['sdcard']['used_formatted']) ?> / <?= htmlspecialchars($storage['sdcard']['total_formatted']) ?> (<?= htmlspecialchars($storage['sdcard']['percent']) ?>%)</span>
                 </div>
                 <div class="progress bg-white bg-opacity-10" style="height: 10px; border-radius: 5px;">
-                    <div class="progress-bar bg-warning" role="progressbar" style="width: 18.9%; border-radius: 5px;"></div>
+                    <div class="progress-bar bg-warning" role="progressbar" style="width: <?= $storage['sdcard']['percent'] ?>%; border-radius: 5px;"></div>
                 </div>
                 <div class="d-flex justify-content-between fs-8 text-secondary mt-1">
-                    <span>Used: 12.1 GB</span>
-                    <span>Available: 51.9 GB</span>
+                    <span>Used: <?= htmlspecialchars($storage['sdcard']['used_formatted']) ?></span>
+                    <span>Available: <?= htmlspecialchars($storage['sdcard']['available_formatted']) ?></span>
                 </div>
             </div>
         </div>
@@ -225,43 +262,43 @@
             <div class="row g-3">
                 <div class="col-6 col-md-4 col-lg-2">
                     <div class="p-3 bg-black bg-opacity-20 rounded-12 border border-white border-opacity-5 text-center">
-                        <div class="text-secondary fs-8 mb-1">Operator Name</div>
-                        <div class="text-white font-weight-600">XL</div>
+                        <div class="text-secondary fs-8 mb-1">Signal Strength</div>
+                        <div class="text-white font-weight-600" id="simLevelVal"><?= htmlspecialchars($sim['level']) ?></div>
                     </div>
                 </div>
                 
                 <div class="col-6 col-md-4 col-lg-2">
                     <div class="p-3 bg-black bg-opacity-20 rounded-12 border border-white border-opacity-5 text-center">
                         <div class="text-secondary fs-8 mb-1">PCI (Cell ID)</div>
-                        <div class="text-white font-weight-600">384</div>
+                        <div class="text-white font-weight-600" id="simPciVal"><?= htmlspecialchars($sim['pci']) ?></div>
                     </div>
                 </div>
-
+                
                 <div class="col-6 col-md-4 col-lg-2">
                     <div class="p-3 bg-black bg-opacity-20 rounded-12 border border-white border-opacity-5 text-center">
                         <div class="text-secondary fs-8 mb-1">RSSI</div>
-                        <div class="text-success font-weight-600">-65 dBm</div>
+                        <div class="text-success font-weight-600" id="simRssiVal"><?= $sim['rssi'] !== 'N/A' ? htmlspecialchars($sim['rssi']) . ' dBm' : 'N/A' ?></div>
                     </div>
                 </div>
-
+                
                 <div class="col-6 col-md-4 col-lg-2">
                     <div class="p-3 bg-black bg-opacity-20 rounded-12 border border-white border-opacity-5 text-center">
                         <div class="text-secondary fs-8 mb-1">RSRP</div>
-                        <div class="text-success font-weight-600">-92 dBm</div>
+                        <div class="text-success font-weight-600" id="simRsrpVal"><?= $sim['rsrp'] !== 'N/A' ? htmlspecialchars($sim['rsrp']) . ' dBm' : 'N/A' ?></div>
                     </div>
                 </div>
-
+                
                 <div class="col-6 col-md-4 col-lg-2">
                     <div class="p-3 bg-black bg-opacity-20 rounded-12 border border-white border-opacity-5 text-center">
                         <div class="text-secondary fs-8 mb-1">RSRQ</div>
-                        <div class="text-warning font-weight-600">-12 dB</div>
+                        <div class="text-warning font-weight-600" id="simRsrqVal"><?= $sim['rsrq'] !== 'N/A' ? htmlspecialchars($sim['rsrq']) . ' dB' : 'N/A' ?></div>
                     </div>
                 </div>
-
+                
                 <div class="col-6 col-md-4 col-lg-2">
                     <div class="p-3 bg-black bg-opacity-20 rounded-12 border border-white border-opacity-5 text-center">
                         <div class="text-secondary fs-8 mb-1">SINR</div>
-                        <div class="text-success font-weight-600">18 dB</div>
+                        <div class="text-success font-weight-600" id="simSinrVal"><?= $sim['sinr'] !== 'N/A' ? htmlspecialchars($sim['sinr']) . ' dB' : 'N/A' ?></div>
                     </div>
                 </div>
             </div>
@@ -270,63 +307,132 @@
 </div>
 
 <script>
-    // Live CPU, Battery & Uptime simulations - Uptime is now static
+    // Live CPU, RAM, Swap & SIM Signal Polling (Updates every 1 second)
     function updateDashboardStats() {
-        // CPU Usage (random oscillation)
-        const cpuUsageValEl = document.getElementById('cpuUsageVal');
-        const cpuUsageTextEl = document.getElementById('cpuUsageText');
-        const cpuUsageBarEl = document.getElementById('cpuUsageBar');
-        
-        if (cpuUsageValEl && cpuUsageTextEl && cpuUsageBarEl) {
-            let current = parseFloat(cpuUsageValEl.textContent);
-            let change = (Math.random() - 0.5) * 8; // Change by up to 4%
-            let target = current + change;
-            if (target < 5) target = 5;
-            if (target > 85) target = 85;
-            
-            const fixedTarget = target.toFixed(1);
-            cpuUsageValEl.textContent = fixedTarget + '%';
-            cpuUsageTextEl.textContent = fixedTarget + '%';
-            cpuUsageBarEl.style.width = fixedTarget + '%';
-        }
-        
-        // Battery status/temperature oscillation
-        const batTempEl = document.getElementById('batteryTempText');
-        if (batTempEl) {
-            let temp = parseFloat(batTempEl.textContent);
-            let tempChange = (Math.random() - 0.5) * 0.2;
-            let nextTemp = (temp + tempChange).toFixed(1);
-            batTempEl.textContent = nextTemp + ' °C';
-        }
+        const querySep = window.location.search ? '&' : '?';
+        fetch(window.location.pathname + window.location.search + querySep + 'api=1')
+            .then(res => res.json())
+            .then(data => {
+                // Update CPU Usage
+                const cpuUsageValEl = document.getElementById('cpuUsageVal');
+                const cpuUsageTextEl = document.getElementById('cpuUsageText');
+                const cpuUsageBarEl = document.getElementById('cpuUsageBar');
+                
+                if (cpuUsageValEl && cpuUsageTextEl && cpuUsageBarEl) {
+                    if (data.cpu.usage !== 'N/A') {
+                        const usage = data.cpu.usage.toFixed(1) + '%';
+                        cpuUsageValEl.textContent = usage;
+                        cpuUsageTextEl.textContent = usage;
+                        cpuUsageBarEl.style.width = data.cpu.usage + '%';
+                    } else {
+                        cpuUsageValEl.textContent = 'N/A';
+                        cpuUsageTextEl.textContent = 'N/A';
+                        cpuUsageBarEl.style.width = '0%';
+                    }
+                }
+                
+                // Update Battery status
+                const batTempEl = document.getElementById('batteryTempText');
+                const batStatusEl = document.getElementById('batteryStatusText');
+                const batLevelEl = document.getElementById('batteryLevelVal');
+                
+                if (batTempEl && batStatusEl && batLevelEl) {
+                    batLevelEl.textContent = data.battery.level !== 'N/A' ? data.battery.level + '%' : 'N/A';
+                    batStatusEl.textContent = data.battery.status;
+                    if (data.battery.temperature !== 'N/A') {
+                        batTempEl.innerHTML = `${data.battery.temperature.toFixed(1)} °C &nbsp;<span class="text-white fs-8 font-weight-400">${data.battery.voltage.toFixed(2)}V</span>`;
+                    } else {
+                        batTempEl.textContent = 'N/A';
+                    }
+                }
+
+                // Update Header Battery Pill if present
+                const headerBat = document.getElementById('headerBatteryLevel');
+                const headerBatInfo = document.getElementById('headerBatteryInfo');
+                if (headerBat && headerBatInfo) {
+                    headerBat.textContent = data.battery.level !== 'N/A' ? data.battery.level + '%' : 'N/A';
+                    headerBatInfo.title = 'Status: ' + data.battery.status;
+                }
+                
+                // Update Uptime
+                const uptimeEl = document.getElementById('uptimeVal');
+                if (uptimeEl) {
+                    uptimeEl.textContent = data.device.uptime_formatted;
+                }
+
+                // Update SIM Operators in Info Table
+                const infoSim1 = document.getElementById('infoSim1Operator');
+                const infoSim2 = document.getElementById('infoSim2Operator');
+                if (infoSim1) infoSim1.textContent = data.device.sim1_operator;
+                if (infoSim2) infoSim2.textContent = data.device.sim2_operator;
+
+                // Update RAM Info
+                const ramValEl = document.getElementById('ramUsageVal');
+                const ramDetailEl = document.getElementById('ramDetailText');
+                const ramBar = document.getElementById('ramBar');
+                const ramUsedLabel = document.getElementById('ramUsedLabel');
+                const ramAvailLabel = document.getElementById('ramAvailLabel');
+                
+                if (ramValEl && ramDetailEl && ramBar) {
+                    if (data.memory.ram.total_formatted !== 'N/A') {
+                        ramValEl.textContent = data.memory.ram.used_formatted;
+                        ramDetailEl.textContent = `${data.memory.ram.used_formatted} / ${data.memory.ram.total_formatted} (${data.memory.ram.percent}%)`;
+                        ramBar.style.width = data.memory.ram.percent + '%';
+                        ramUsedLabel.textContent = `Used: ${data.memory.ram.used_formatted}`;
+                        ramAvailLabel.textContent = `Available: ${data.memory.ram.available_formatted}`;
+                    } else {
+                        ramValEl.textContent = 'N/A';
+                        ramDetailEl.textContent = 'N/A';
+                        ramBar.style.width = '0%';
+                        ramUsedLabel.textContent = 'Used: N/A';
+                        ramAvailLabel.textContent = 'Available: N/A';
+                    }
+                }
+
+                // Update Swap Info
+                const swapDetailEl = document.getElementById('swapDetailText');
+                const swapBar = document.getElementById('swapBar');
+                const swapUsedLabel = document.getElementById('swapUsedLabel');
+                const swapAvailLabel = document.getElementById('swapAvailLabel');
+
+                if (swapDetailEl && swapBar) {
+                    if (data.memory.swap.total_formatted !== 'N/A') {
+                        swapDetailEl.textContent = `${data.memory.swap.used_formatted} / ${data.memory.swap.total_formatted} (${data.memory.swap.percent}%)`;
+                        swapBar.style.width = data.memory.swap.percent + '%';
+                        if (swapUsedLabel) swapUsedLabel.textContent = `Used: ${data.memory.swap.used_formatted}`;
+                        if (swapAvailLabel) swapAvailLabel.textContent = `Available: ${data.memory.swap.available_formatted}`;
+                    } else {
+                        swapDetailEl.textContent = 'N/A';
+                        swapBar.style.width = '0%';
+                        if (swapUsedLabel) swapUsedLabel.textContent = 'Used: N/A';
+                        if (swapAvailLabel) swapAvailLabel.textContent = 'Available: N/A';
+                    }
+                }
+
+                // Update Operator & Signal Info (Real-Time 1 second updates)
+                const statOperatorVal = document.getElementById('statOperatorVal');
+                const statOperatorLabel = document.getElementById('statOperatorLabel');
+                const simLevelVal = document.getElementById('simLevelVal');
+                const simPciVal = document.getElementById('simPciVal');
+                const simRssiVal = document.getElementById('simRssiVal');
+                const simRsrpVal = document.getElementById('simRsrpVal');
+                const simRsrqVal = document.getElementById('simRsrqVal');
+                const simSinrVal = document.getElementById('simSinrVal');
+
+                if (statOperatorVal) statOperatorVal.textContent = data.sim.active_operator;
+                if (statOperatorLabel) statOperatorLabel.textContent = 'SIM Data: SIM ' + data.sim.active_data_sim;
+                if (simLevelVal) simLevelVal.textContent = data.sim.level;
+                if (simPciVal) simPciVal.textContent = data.sim.pci;
+                if (simRssiVal) simRssiVal.textContent = data.sim.rssi !== 'N/A' ? data.sim.rssi + ' dBm' : 'N/A';
+                if (simRsrpVal) simRsrpVal.textContent = data.sim.rsrp !== 'N/A' ? data.sim.rsrp + ' dBm' : 'N/A';
+                if (simRsrqVal) simRsrqVal.textContent = data.sim.rsrq !== 'N/A' ? data.sim.rsrq + ' dB' : 'N/A';
+                if (simSinrVal) simSinrVal.textContent = data.sim.sinr !== 'N/A' ? data.sim.sinr + ' dB' : 'N/A';
+            })
+            .catch(error => {
+                console.error('Error fetching dashboard status:', error);
+            });
     }
 
-    // Run interval every second
+    // Refresh every 1 second (1000ms) for real-time CPU, RAM, Swap & operator metrics
     setInterval(updateDashboardStats, 1000);
-
-    // Dynamic Memory simulation (minor memory adjustments) - Adjusted for 2GB total
-    setInterval(() => {
-        const ramValEl = document.getElementById('ramUsageVal');
-        const ramDetailEl = document.getElementById('ramDetailText');
-        const ramBar = document.getElementById('ramBar');
-        const ramUsedLabel = document.getElementById('ramUsedLabel');
-        const ramAvailLabel = document.getElementById('ramAvailLabel');
-        
-        if (ramValEl && ramDetailEl && ramBar) {
-            let ram = parseFloat(ramValEl.textContent);
-            let ramChange = (Math.random() - 0.5) * 0.05;
-            let nextRam = (ram + ramChange).toFixed(2);
-            if (nextRam < 1.0) nextRam = 1.0;
-            if (nextRam > 1.4) nextRam = 1.4;
-            
-            const totalRam = 2.0;
-            const pct = ((nextRam / totalRam) * 100).toFixed(1);
-            const avail = (totalRam - nextRam).toFixed(2);
-            
-            ramValEl.textContent = nextRam + ' GB';
-            ramDetailEl.textContent = `${nextRam} GB / ${totalRam.toFixed(1)} GB (${pct}%)`;
-            ramBar.style.width = pct + '%';
-            ramUsedLabel.textContent = `Used: ${nextRam} GB`;
-            ramAvailLabel.textContent = `Available: ${avail} GB`;
-        }
-    }, 4000);
 </script>

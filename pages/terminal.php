@@ -1,6 +1,6 @@
 <?php
-$term_port = db_get('terminal_port', '3001');
-$term_url = db_get('terminal_url', '');
+$term_port = $device->getDbSetting('terminal_port', '3001');
+$term_url = $device->getDbSetting('terminal_url', '');
 $hostname = $_SERVER['HTTP_HOST'];
 $host_only = parse_url('http://' . $hostname, PHP_URL_HOST);
 $is_ip = filter_var($host_only, FILTER_VALIDATE_IP) || 

@@ -16,6 +16,11 @@ if ($bg_path) {
 }
 
 $db_user = db_get('username', 'admin');
+
+// Get real header battery info
+$headerBattery = $device->getBatteryDetails();
+$headerBatteryLevel = isset($headerBattery['level']) ? $headerBattery['level'] . '%' : 'N/A';
+$headerBatteryStatus = isset($headerBattery['status']) ? $headerBattery['status'] : '';
 ?>
 <!DOCTYPE html>
 <html lang="id">
@@ -48,7 +53,7 @@ $db_user = db_get('username', 'admin');
         <div class="sidebar-header d-flex flex-column align-items-start gap-0">
             <a href="index.php?page=dashboard" class="sidebar-brand">Mobile Server</a>
             <!-- Added Created by subtitle here -->
-            <span class="text-secondary" style="font-size: 0.725rem; margin-top: -2px;">Created by: @andikariskys</span>
+            <span class="text-secondary" style="font-size: 0.725rem; margin-top: -2px;">Created by: <a href="http://www.andikariskys.my.id" target="_blank" class="text-secondary text-decoration-none hover-white">www.andikariskys.my.id</a></span>
         </div>
         
         <ul class="sidebar-menu">
@@ -190,9 +195,9 @@ $db_user = db_get('username', 'admin');
                 </div>
                 
                 <!-- Status Pill: Battery - Removed white background -->
-                <div class="d-flex align-items-center gap-2 px-3 py-1.5 rounded-pill bg-transparent border border-white border-opacity-10" id="headerBatteryInfo">
+                <div class="d-flex align-items-center gap-2 px-3 py-1.5 rounded-pill bg-transparent border border-white border-opacity-10" id="headerBatteryInfo" title="Status: <?= htmlspecialchars($headerBatteryStatus) ?>">
                     <i class="fi fi-sr-battery-full text-warning"></i>
-                    <span class="text-white font-weight-500 fs-7" id="headerBatteryLevel">78%</span>
+                    <span class="text-white font-weight-500 fs-7" id="headerBatteryLevel"><?= htmlspecialchars($headerBatteryLevel) ?></span>
                 </div>
             </div>
         </header>

@@ -1,3 +1,43 @@
+<?php
+// Handle POST control actions
+$msg = '';
+$error = '';
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
+    $action = $_POST['action'];
+    $res = false;
+    
+    if ($action === 'reboot') {
+        $res = $device->rebootDevice();
+        if ($res) {
+            $msg = 'Perangkat sedang memulai ulang... Server terputus.';
+        } else {
+            $error = 'Gagal mengirim perintah restart ke perangkat.';
+        }
+    } elseif ($action === 'shutdown') {
+        $res = $device->shutdownDevice();
+        if ($res) {
+            $msg = 'Perangkat sedang dimatikan... Hubungan ke server terputus.';
+        } else {
+            $error = 'Gagal mengirim perintah shutdown ke perangkat.';
+        }
+    } elseif ($action === 'cache') {
+        $res = $device->clearCache();
+        if ($res) {
+            $msg = 'Sistem Cache berhasil dibersihkan! RAM telah disegarkan.';
+        } else {
+            $error = 'Gagal membersihkan cache perangkat.';
+        }
+    }
+
+    if (isset($_GET['api']) && $_GET['api'] == '1') {
+        header('Content-Type: application/json');
+        echo json_encode(['success' => $res, 'message' => $res ? $msg : $error]);
+        exit;
+    }
+}
+?>
+
 <div class="row g-4">
     <!-- Reboot Card -->
     <div class="col-12 col-md-6 col-lg-4">
@@ -80,13 +120,12 @@
         let title = '';
         let confirmText = '';
         let successMsg = '';
-        let duration = 3000;
         
         switch(type) {
             case 'reboot':
                 title = 'Reboot Perangkat?';
                 confirmText = 'Apakah Anda yakin ingin memulai ulang perangkat? Server web akan offline sementara waktu.';
-                successMsg = 'Perangkat sedang memulai ulang... Server terputus.';
+                successMsg = 'Perangkat sedang memulai ulang...';
                 break;
             case 'shutdown':
                 title = 'Matikan Perangkat?';
@@ -96,7 +135,7 @@
             case 'cache':
                 title = 'Bersihkan Cache?';
                 confirmText = 'Bersihkan cache memori sementara perangkat sekarang?';
-                successMsg = 'Sistem Cache berhasil dibersihkan! RAM dikosongkan sebanyak 824 MB.';
+                successMsg = 'Sistem Cache berhasil dibersihkan!';
                 break;
         }
 
@@ -112,33 +151,40 @@
             statusTitle.textContent = 'Mengirim Perintah...';
             statusDesc.textContent = `Menghubungi perangkat untuk ${type === 'cache' ? 'clear cache' : type}...`;
             
-            setTimeout(() => {
-                statusTitle.textContent = 'Mengeksekusi...';
-                if (type === 'reboot') {
-                    statusDesc.textContent = 'Menunggu reboot selesai... (Simulasi Offline)';
-                } else if (type === 'shutdown') {
-                    statusDesc.textContent = 'Perangkat mematikan service server...';
-                } else {
-                    statusDesc.textContent = 'Membersihkan data temporary & RAM...';
-                }
-            }, 1500);
-
-            setTimeout(() => {
+            // Build Form Data
+            let formData = new FormData();
+            formData.append('action', type);
+            
+            const querySep = window.location.search ? '&' : '?';
+            fetch(window.location.pathname + window.location.search + querySep + 'api=1', {
+                method: 'POST',
+                body: formData
+            })
+            .then(res => res.json())
+            .then(res => {
                 backdrop.classList.add('d-none');
                 backdrop.classList.remove('d-flex');
                 
-                // Show toast or trigger action
-                if (type === 'cache') {
-                    const toastEl = document.getElementById('actionToast');
-                    const toastMsg = document.getElementById('toastMessage');
-                    toastMsg.textContent = successMsg;
-                    const toast = new bootstrap.Toast(toastEl);
-                    toast.show();
+                if (res.success) {
+                    if (type === 'cache') {
+                        const toastEl = document.getElementById('actionToast');
+                        const toastMsg = document.getElementById('toastMessage');
+                        toastMsg.textContent = res.message;
+                        const toast = new bootstrap.Toast(toastEl);
+                        toast.show();
+                    } else {
+                        alert(res.message);
+                        window.location.href = 'index.php?page=login';
+                    }
                 } else {
-                    alert(successMsg + "\n\n(Simulasi: Halaman akan memuat ulang)");
-                    window.location.href = 'index.php?page=login';
+                    alert('Gagal: ' + res.message);
                 }
-            }, 4000);
+            })
+            .catch(err => {
+                backdrop.classList.add('d-none');
+                backdrop.classList.remove('d-flex');
+                alert('Gagal menghubungi server untuk mengeksekusi perintah.');
+            });
         }
     }
 </script>

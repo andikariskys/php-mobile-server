@@ -1,0 +1,333 @@
+# ==============================================================================
+# PEMETAAN MENU, DATA, DAN PERINTAH PERANGKAT (ANDROID / TERMUX / SHELL)
+# ==============================================================================
+# File ini merinci setiap halaman/menu dari aplikasi Mobile Web Server beserta
+# data yang ditampilkan (untuk query/read) dan aksi yang dilakukan (untuk execute).
+# Anda dapat menggunakan file ini sebagai panduan untuk merencanakan perintah shell 
+# (via ADB, Termux, Android API, atau API Termux) yang perlu dipanggil oleh backend PHP.
+# ==============================================================================
+
+Project: PHP Mobile Web Server
+Author: @andikariskys (Mapped by Antigravity)
+Created Date: 2026-07-10
+
+Menus:
+  # ----------------------------------------------------------------------------
+  # 1. DASHBOARD (Informasi Sistem & Status Perangkat)
+  # ----------------------------------------------------------------------------
+  Dashboard:
+    Data_Dibutuhkan:
+      Informasi_Perangkat:
+        - Nama Perangkat:
+            Tipe: Teks
+            Format: "Brand Model" (Contoh: "Xiaomi Redmi 4A")
+            Petunjuk Perintah: `getprop ro.product.brand` & `getprop ro.product.model`
+        - Codename Perangkat:
+            Tipe: Teks
+            Format: String kecil (Contoh: "rolex")
+            Petunjuk Perintah: `getprop ro.product.device` atau `getprop ro.build.product`
+        - Android Version:
+            Tipe: Teks
+            Format: Versi OS (Contoh: "10" atau "10.0")
+            Petunjuk Perintah: `getprop ro.build.version.release`
+        - Hardware Model:
+            Tipe: Teks
+            Format: Informasi CPU Chipset (Contoh: "Qualcomm Snapdragon 425 (MSM8917)")
+            Petunjuk Perintah: `getprop ro.board.platform` atau parsing dari `/proc/cpuinfo`
+        - Uptime Perangkat:
+            Tipe: Waktu
+            Format: "HHh MMm SSs" (Contoh: "05h 12m 43s")
+            Petunjuk Perintah: Parsing dari `/proc/uptime` atau output dari perintah `uptime`
+            
+      Informasi_CPU:
+        - CPU Usage (Core Load):
+            Tipe: Persentase (2 digit di belakang koma)
+            Format: "XX.XX%" (Contoh: "24.50%")
+            Petunjuk Perintah: Dihitung dari `/proc/stat` atau parsing command `top -n 1 -m 1`
+        - CPU Model & Cores:
+            Tipe: Teks
+            Format: Nama Arsitektur & Jumlah Core (Contoh: "Cortex-A53 (4 Cores) @ 1.40 GHz")
+            Petunjuk Perintah: Membaca `/proc/cpuinfo` (melihat processor count dan hardware name)
+            
+      Informasi_Baterai:
+        - Battery Level:
+            Tipe: Persentase
+            Format: "XX%" (Contoh: "78%")
+            Petunjuk Perintah: `dumpsys battery | grep level` atau membaca `/sys/class/power_supply/battery/capacity`
+        - Status Baterai:
+            Tipe: Teks
+            Format: Charging / Discharging / Full / Not Charging
+            Petunjuk Perintah: `dumpsys battery | grep status` atau `/sys/class/power_supply/battery/status`
+        - Suhu Baterai:
+            Tipe: Desimal
+            Format: "XX.X °C" (Contoh: "32.4 °C")
+            Petunjuk Perintah: Nilai integer dibagi 10 dari `dumpsys battery | grep temp` atau `/sys/class/power_supply/battery/temp`
+            
+      Informasi_Memori (RAM & Swap):
+        - RAM Total:
+            Tipe: Bytes/Gigabytes
+            Format: Angka dengan satuan (Contoh: "2.0 GB")
+            Petunjuk Perintah: Membaca `/proc/meminfo` (MemTotal)
+        - RAM Used:
+            Tipe: Bytes/Gigabytes
+            Format: Angka dengan satuan (Contoh: "1.2 GB")
+            Petunjuk Perintah: MemTotal dikurangi MemAvailable/MemFree dari `/proc/meminfo`
+        - RAM Available:
+            Tipe: Bytes/Gigabytes
+            Format: Angka dengan satuan (Contoh: "0.8 GB")
+            Petunjuk Perintah: MemAvailable atau MemFree dari `/proc/meminfo`
+        - RAM Usage Percent:
+            Tipe: Persentase
+            Format: "XX.X%" (Contoh: "60.0%")
+            Petunjuk Perintah: Persentase hasil pembagian RAM Used / RAM Total
+        - Swap Total, Used, Available, Percent:
+            Tipe: Memori Swap
+            Format: Sama seperti RAM
+            Petunjuk Perintah: Membaca `/proc/meminfo` (SwapTotal, SwapFree)
+            
+      Informasi_Penyimpanan (Storage):
+        - Internal Storage (Total, Used, Available, Percent):
+            Tipe: Penyimpanan
+            Format: Angka dengan satuan & Persentase (Contoh: "20.5 GB / 32.0 GB (64.0%)")
+            Petunjuk Perintah: Parsing output dari perintah `df -h /data` atau `/sdcard`
+        - SD Card Storage (Total, Used, Available, Percent):
+            Tipe: Penyimpanan
+            Format: Angka dengan satuan & Persentase (Contoh: "12.1 GB / 64.0 GB (18.9%)")
+            Petunjuk Perintah: Parsing output `df -h` untuk path mount external SD Card (biasanya di `/storage/XXXX-XXXX`)
+            
+      Informasi_Operator_Sinyal:
+        - Operator Name:
+            Tipe: Teks
+            Format: Nama provider (Contoh: "XL" atau "Telkomsel")
+            Petunjuk Perintah: `getprop gsm.operator.alpha` atau API telephony Android
+        - PCI (Physical Cell ID):
+            Tipe: Angka
+            Format: Integer (Contoh: "384")
+            Petunjuk Perintah: Menggunakan TelephonyManager API atau `dumpsys telephony.registry`
+        - RSSI / RSRP / RSRQ / SINR:
+            Tipe: Kekuatan Sinyal (dBm & dB)
+            Format: Nilai dBm/dB (Contoh: RSRP: "-92 dBm", RSRQ: "-12 dB")
+            Petunjuk Perintah: Parsing `dumpsys telephony.registry` bagian SignalStrength
+
+  # ----------------------------------------------------------------------------
+  # 2. DEVICE CONTROL (Aksi Kontrol Sistem Utama)
+  # ----------------------------------------------------------------------------
+  Device_Control:
+    Aksi_Perintah:
+      - Reboot Device:
+          Aksi: Memulai ulang perangkat secara penuh.
+          Trigger Form: POST / Javascript `confirmAction('reboot')`
+          Petunjuk Perintah: `reboot` (memerlukan hak akses root) atau broadcast intent
+      - Shutdown Device:
+          Aksi: Mematikan perangkat sepenuhnya.
+          Trigger Form: POST / Javascript `confirmAction('shutdown')`
+          Petunjuk Perintah: `reboot -p` atau `poweroff` (memerlukan hak akses root)
+      - Clear Cache:
+          Aksi: Pembersihan file temporary sistem/aplikasi dan RAM.
+          Trigger Form: POST / Javascript `confirmAction('cache')`
+          Petunjuk Perintah: 
+            - Cache RAM: `echo 3 > /proc/sys/vm/drop_caches` (root)
+            - Cache Aplikasi: Menghapus folder cache di `/data/cache/*` atau menggunakan PackageInstaller API / pm trim-caches
+
+  # ----------------------------------------------------------------------------
+  # 3. NETWORK (Konektivitas & Konfigurasi IP)
+  # ----------------------------------------------------------------------------
+  Network:
+    Data_Dibutuhkan:
+      - WiFi Status:
+          Tipe: Teks & Boolean (Enabled / Connected to [SSID] / Disabled)
+          Petunjuk Perintah: `cmd wifi status` atau `dumpsys wifi` atau membaca state via Termux-Wifi-ConnectionInfo
+      - Mobile Data Status:
+          Tipe: Teks & Boolean (Enabled / Disabled)
+          Petunjuk Perintah: `telephony` status check atau `settings get global mobile_data`
+      - Airplane Mode Status:
+          Tipe: Teks & Boolean (Enabled / Disabled)
+          Petunjuk Perintah: `settings get global airplane_mode_on`
+      - Bluetooth Status:
+          Tipe: Teks & Boolean (Enabled / Disabled / Idle)
+          Petunjuk Perintah: `settings get global bluetooth_on` atau command `settings` lainnya
+      - Daftar Interface Network & IP:
+          Tipe: Tabel / List
+          Format: Nama Interface & IP Address/Prefix (Contoh: "wlan0 -> 192.168.43.99/24")
+          Petunjuk Perintah: Perintah `ip addr show` atau `ifconfig`
+      - Konfigurasi IP Statis (Current DB State):
+          Tipe: IP Address & Subnet Mask / CIDR Prefix
+          Format: "192.168.1.100" & "255.255.255.0"
+          Petunjuk Perintah: Membaca tabel settings di database `settings.db`
+
+    Aksi_Perintah:
+      - Toggle WiFi:
+          Aksi: Mengaktifkan atau menonaktifkan Wi-Fi perangkat.
+          Trigger: Switch Toggle WiFi
+          Petunjuk Perintah: `cmd wifi set-wifi-enabled enable/disable` atau `svc wifi enable/disable` (root)
+      - Toggle Mobile Data:
+          Aksi: Mengaktifkan atau menonaktifkan Data Seluler.
+          Trigger: Switch Toggle Data Seluler
+          Petunjuk Perintah: `svc data enable/disable` (root) atau via telephony API
+      - Toggle Airplane Mode:
+          Aksi: Mengaktifkan atau menonaktifkan Mode Pesawat.
+          Trigger: Switch Toggle Mode Pesawat
+          Petunjuk Perintah: `settings put global airplane_mode_on 1/0` dilanjutkan dengan broadcast intent `am broadcast -a android.intent.action.AIRPLANE_MODE --ez state true/false` (root)
+      - Toggle Bluetooth:
+          Aksi: Mengaktifkan atau menonaktifkan Bluetooth.
+          Trigger: Switch Toggle Bluetooth
+          Petunjuk Perintah: `service call bluetooth_manager 6` / `8` atau via tool helper bluetooth (root/API)
+      - Simpan Konfigurasi IP Statis:
+          Aksi: Menyimpan parameter IP Address & Netmask/Prefix ke database dan menerapkannya ke interface jaringan.
+          Trigger: Form POST `save_ip`
+          Petunjuk Perintah: `ip addr add <ip>/<prefix> dev <interface>` (root) atau konfigurasi system settings network
+
+  # ----------------------------------------------------------------------------
+  # 4. SMS (Kirim & Baca Pesan SMS)
+  # ----------------------------------------------------------------------------
+  SMS:
+    Data_Dibutuhkan:
+      - Daftar Semua Pesan (Inbox & Sent):
+          Tipe: List / Feed
+          Format: ID, Tipe (Inbox/Sent), Pengirim/Penerima, Waktu, Isi Pesan
+          Petunjuk Perintah: 
+            - Membaca database SMS internal Android menggunakan content provider: 
+              `content query --uri content://sms` (Akses ADB/Root)
+            - Atau menggunakan perintah Termux-API: `termux-sms-list`
+            
+    Aksi_Perintah:
+      - Kirim SMS:
+          Aksi: Mengirim pesan SMS ke satu atau beberapa nomor (dipecah dengan koma).
+          Trigger: Form POST `send_sms`
+          Format Input: `recipient` (nomor HP), `message` (maksimal 160 karakter)
+          Petunjuk Perintah:
+            - ADB: `service call phone 7 s16 "nomor" s16 "" s16 "pesan"`
+            - Termux-API: `termux-sms-send -n <nomor> "<pesan>"`
+
+  # ----------------------------------------------------------------------------
+  # 5. NOTIFICATION (Notifikasi Sistem Android)
+  # ----------------------------------------------------------------------------
+  Notification:
+    Data_Dibutuhkan:
+      - Daftar Notifikasi Aktif:
+          Tipe: List
+          Format: ID, App Name, Icon, Title, Message, Time
+          Petunjuk Perintah: 
+            - Menggunakan Termux-API: `termux-notification-list`
+            - Atau dumpsys notification manager: `dumpsys notification` (memerlukan parsing intensif)
+            
+    Aksi_Perintah:
+      - Hapus Notifikasi Tunggal:
+          Aksi: Menghapus notifikasi spesifik berdasarkan Key/ID.
+          Trigger: Tombol "x" / POST `clear_id`
+          Petunjuk Perintah: `termux-notification-remove <notification-id>` (jika pakai Termux API)
+      - Hapus Semua Notifikasi:
+          Aksi: Menghapus seluruh notifikasi yang terdaftar di sistem.
+          Trigger: Tombol "Hapus Semua" / POST `clear_all`
+          Petunjuk Perintah: Iterasi penghapusan semua ID notifikasi
+
+  # ----------------------------------------------------------------------------
+  # 6. CAMERA (Live Stream & Pemotretan Foto)
+  # ----------------------------------------------------------------------------
+  Camera:
+    Data_Dibutuhkan:
+      - Konfigurasi Kamera (Port / URL Domain):
+          Tipe: Settings terintegrasi
+          Format: Port IP Camera (Contoh: "4444") atau URL Domain kustom
+          Petunjuk Perintah: Membaca database `settings.db`
+      - Informasi Hasil Jepretan Terakhir:
+          Tipe: Metadata File Foto
+          Format: Nama file, Waktu ambil, Resolusi (1280x720), Path perangkat, Path server
+          Petunjuk Perintah: Listing file di folder output kamera (misalnya `/sdcard/DCIM/Camera/` atau folder upload assets)
+          
+    Aksi_Perintah:
+      - Ambil Foto (Jepret):
+          Aksi: Menginstruksikan modul kamera perangkat untuk mengambil foto instan (kamera depan/belakang) dan menyimpannya.
+          Trigger: Tombol "Ambil Foto (Jepret)" / Javascript `captureIpCamPhoto()`
+          Petunjuk Perintah:
+            - Termux-API: `termux-camera-photo -c <camera-id> <output-file.jpg>`
+            - Atau curl snapshot endpoint dari aplikasi IP Webcam pihak ketiga yang berjalan di localhost:4444 (Contoh: `http://localhost:4444/shot.jpg`)
+
+  # ----------------------------------------------------------------------------
+  # 7. AUDIO & TTS (Volume Perangkat & Text-to-Speech)
+  # ----------------------------------------------------------------------------
+  Audio_dan_TTS:
+    Data_Dibutuhkan:
+      - Nilai Volume Sistem saat ini:
+          Tipe: Slider Range (0-100)
+          Daftar Volume: Call, System, Ring, Music, Alarm, Notification
+          Petunjuk Perintah:
+            - Termux-API: `termux-volume` (menghasilkan info volume per stream)
+            - Atau dumpsys audio: `dumpsys audio` (perlu parsing manual)
+            
+    Aksi_Perintah:
+      - Ubah Volume Jaringan Suara:
+          Aksi: Menyimpan & menerapkan volume tertentu secara dinamis saat slider digeser.
+          Trigger: JS `saveVolume(key, value)` -> POST `save_single_volume`
+          Petunjuk Perintah:
+            - Termux-API: `termux-volume <stream-type> <volume-level-integer>` (Stream: call, system, ring, music, alarm, notification)
+            - Shell/ADB: `media volume --stream <id> --set <level>`
+      - Text-to-Speech (TTS) / Putar Audio:
+          Aksi: Mengucapkan teks input melalui speaker perangkat dengan parameter tertentu.
+          Trigger: Form submit `speakText()` -> Putar Audio
+          Format Input: `ttsInput` (teks), `ttsVoice` (nama package engine TTS), `ttsRate` (kecepatan), `ttsPitch` (nada)
+          Petunjuk Perintah:
+            - Termux-API: `termux-tts-speak -e <engine-package-name> -r <rate> -p <pitch> "<teks_pesan>"`
+            - Engine yang didukung contohnya: `com.google.android.tts`
+
+  # ----------------------------------------------------------------------------
+  # 8. LOCATION (Lokasi GPS Perangkat)
+  # ----------------------------------------------------------------------------
+  Location:
+    Data_Dibutuhkan:
+      - Koordinat GPS Terkini:
+          Tipe: Float Koordinat
+          Parameter: Latitude (Lintang), Longitude (Bujur), Akurasi (Meter)
+          Petunjuk Perintah:
+            - Termux-API: `termux-location -p gps` atau `termux-location -p network`
+            - Atau dumpsys location: `dumpsys location`
+
+  # ----------------------------------------------------------------------------
+  # 9. TERMINAL (Akses Shell Emulator)
+  # ----------------------------------------------------------------------------
+  Terminal:
+    Data_Dibutuhkan:
+      - Port / URL Terminal:
+          Tipe: Teks & Port (Default: 3001)
+          Petunjuk Perintah: Membaca database `settings.db`
+    Aksi_Perintah:
+      - Embedded Terminal:
+          Aksi: Merender terminal ttyd interaktif langsung di dalam iframe web server.
+          Petunjuk Daemon Perangkat: Menjalankan binary `ttyd` pada port 3001 dengan shell bash/sh:
+            `ttyd -p 3001 bash` atau `ttyd -p 3001 login`
+
+  # ----------------------------------------------------------------------------
+  # 10. DEVELOPER (Status Sockets & Layanan Aktif)
+  # ----------------------------------------------------------------------------
+  Developer:
+    Data_Dibutuhkan:
+      - Sockets Listening Table:
+          Tipe: Tabel Port Aktif
+          Format: Nama Layanan/Proses, Local Address (IP:Port), PID Proses, FD, Send/Recv Queue
+          Petunjuk Perintah: 
+            - Android shell: `ss -lptn` (Memerlukan root/Termux)
+            - Atau parsing dari `/proc/net/tcp` & `/proc/net/tcp6` jika `ss` tidak tersedia
+
+  # ----------------------------------------------------------------------------
+  # 11. FILE MANAGER (Pengelolaan Penyimpanan Berkas)
+  # ----------------------------------------------------------------------------
+  File_Manager:
+    Aksi_Perintah:
+      - Integrasi Tiny File Manager:
+          Aksi: Web file explorer lengkap untuk melakukan upload, download, edit, rename, compress, dan delete file di direktori yang ditentukan.
+          Petunjuk Path Perangkat: Diarahkan ke folder webroot php server atau mount point `/sdcard` untuk akses file manager eksternal.
+
+  # ----------------------------------------------------------------------------
+  # 12. SETTINGS (Pengaturan Web Server & Integrasi)
+  # ----------------------------------------------------------------------------
+  Settings:
+    Aksi_Perintah:
+      - Ganti Kredensial Login:
+          Aksi: Memperbarui username dan password login web server.
+          Trigger: Form POST `change_creds` (Menyimpan di `settings.db`)
+      - Ubah Background Dashboard:
+          Aksi: Mengunggah gambar kustom untuk background dashboard (.jpg/.png) ke folder server.
+          Trigger: Form POST `upload_bg`
+      - Simpan Konfigurasi Integrasi:
+          Aksi: Menyimpan pengaturan Port & URL Domain untuk IP Camera dan Terminal ttyd.
+          Trigger: Form POST `save_integration` (Menyimpan di `settings.db`)

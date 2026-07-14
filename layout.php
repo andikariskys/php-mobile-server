@@ -29,13 +29,13 @@ $db_user = db_get('username', 'admin');
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     
     <!-- Bootstrap CSS -->
-    <link rel="stylesheet" href="/assets/bootstrap/css/bootstrap.min.css">
+    <link rel="stylesheet" href="assets/bootstrap/css/bootstrap.min.css">
     
     <!-- Flaticon UIcons CSS -->
-    <link rel="stylesheet" href="/assets/flaticon/css/uicons-solid-rounded.css">
+    <link rel="stylesheet" href="assets/flaticon/css/uicons-solid-rounded.css">
     
     <!-- Custom Style CSS -->
-    <link rel="stylesheet" href="/assets/style.css">
+    <link rel="stylesheet" href="assets/style.css">
 </head>
 <body <?= $bg_style ?>>
     <div class="bg-overlay"></div>
@@ -46,81 +46,81 @@ $db_user = db_get('username', 'admin');
     <!-- Sidebar Layout -->
     <aside class="sidebar" id="sidebarMenu">
         <div class="sidebar-header d-flex flex-column align-items-start gap-0">
-            <a href="/dashboard" class="sidebar-brand">Mobile Server</a>
+            <a href="index.php?page=dashboard" class="sidebar-brand">Mobile Server</a>
             <!-- Added Created by subtitle here -->
             <span class="text-secondary" style="font-size: 0.725rem; margin-top: -2px;">Created by: @andikariskys</span>
         </div>
         
         <ul class="sidebar-menu">
             <li class="sidebar-item">
-                <a href="/dashboard" class="sidebar-link <?= is_active('/dashboard') ?>">
+                <a href="index.php?page=dashboard" class="sidebar-link <?= is_active('/dashboard') ?>">
                     <i class="fi fi-sr-dashboard"></i>
                     <span>Dashboard</span>
                 </a>
             </li>
             <li class="sidebar-item">
-                <a href="/file-manager" class="sidebar-link <?= is_active('/file-manager') ?>">
+                <a href="index.php?page=file-manager" class="sidebar-link <?= is_active('/file-manager') ?>">
                     <i class="fi fi-sr-folder"></i>
                     <span>File Manager</span>
                 </a>
             </li>
             <li class="sidebar-item">
-                <a href="/device-control" class="sidebar-link <?= is_active('/device-control') ?>">
+                <a href="index.php?page=device-control" class="sidebar-link <?= is_active('/device-control') ?>">
                     <i class="fi fi-sr-power"></i>
                     <span>Device Control</span>
                 </a>
             </li>
             <li class="sidebar-item">
-                <a href="/network" class="sidebar-link <?= is_active('/network') ?>">
+                <a href="index.php?page=network" class="sidebar-link <?= is_active('/network') ?>">
                     <i class="fi fi-sr-wifi"></i>
                     <span>Network Settings</span>
                 </a>
             </li>
             <li class="sidebar-item">
-                <a href="/sms" class="sidebar-link <?= is_active('/sms') ?>">
+                <a href="index.php?page=sms" class="sidebar-link <?= is_active('/sms') ?>">
                     <i class="fi fi-sr-envelope"></i>
                     <span>SMS Manager</span>
                 </a>
             </li>
             <li class="sidebar-item">
-                <a href="/notification" class="sidebar-link <?= is_active('/notification') ?>">
+                <a href="index.php?page=notification" class="sidebar-link <?= is_active('/notification') ?>">
                     <i class="fi fi-sr-bell"></i>
                     <span>Notifications</span>
                 </a>
             </li>
             <li class="sidebar-item">
-                <a href="/camera" class="sidebar-link <?= is_active('/camera') ?>">
+                <a href="index.php?page=camera" class="sidebar-link <?= is_active('/camera') ?>">
                     <i class="fi fi-sr-camera"></i>
                     <span>Camera Control</span>
                 </a>
             </li>
             <li class="sidebar-item">
-                <a href="/audio" class="sidebar-link <?= is_active('/audio') ?>">
+                <a href="index.php?page=audio" class="sidebar-link <?= is_active('/audio') ?>">
                     <i class="fi fi-sr-volume"></i>
                     <span>Audio & TTS</span>
                 </a>
             </li>
             <li class="sidebar-item">
-                <a href="/location" class="sidebar-link <?= is_active('/location') ?>">
+                <a href="index.php?page=location" class="sidebar-link <?= is_active('/location') ?>">
                     <i class="fi fi-sr-marker"></i>
                     <span>Location Map</span>
                 </a>
             </li>
             <li class="sidebar-item">
-                <a href="/terminal" class="sidebar-link <?= is_active('/terminal') ?>">
+                <a href="index.php?page=terminal" class="sidebar-link <?= is_active('/terminal') ?>">
                     <i class="fi fi-sr-terminal"></i>
                     <span>Terminal</span>
                 </a>
             </li>
             <!-- Added Developer Menu -->
             <li class="sidebar-item">
-                <a href="/developer" class="sidebar-link <?= is_active('/developer') ?>">
+                <a href="index.php?page=developer" class="sidebar-link <?= is_active('/developer') ?>">
                     <i class="fi fi-sr-menu-dots"></i>
                     <span>Developer</span>
                 </a>
             </li>
             <li class="sidebar-item">
-                <a href="/settings" class="sidebar-link <?= is_active('/settings') ?>">
+                <a href="index.php?page=settings" class="sidebar-link <?= is_active('/settings') ?>">
                     <i class="fi fi-sr-settings"></i>
                     <span>System Settings</span>
                 </a>
@@ -145,7 +145,7 @@ $db_user = db_get('username', 'admin');
                     <p class="user-name"><?= htmlspecialchars($db_user) ?></p>
                     <p class="user-role">Administrator</p>
                 </div>
-                <a href="/logout" class="text-danger fs-5" title="Logout" style="text-decoration: none;">
+                <a href="index.php?page=logout" class="text-danger fs-5" title="Logout" style="text-decoration: none;">
                     <i class="fi fi-sr-leave"></i>
                 </a>
             </div>
@@ -203,7 +203,7 @@ $db_user = db_get('username', 'admin');
     </div>
 
     <!-- Bootstrap Bundle JS -->
-    <script src="/assets/bootstrap/js/bootstrap.bundle.min.js"></script>
+    <script src="assets/bootstrap/js/bootstrap.bundle.min.js"></script>
     
     <!-- Custom Layout Interactions -->
     <script>

@@ -1,5 +1,5 @@
 <!-- Load Leaflet CSS only on this page -->
-<link rel="stylesheet" href="/assets/leaflet/leaflet.css">
+<link rel="stylesheet" href="assets/leaflet/leaflet.css">
 
 <div class="row g-4">
     <div class="col-12">
@@ -48,7 +48,7 @@
 </div>
 
 <!-- Load Leaflet JS on this page -->
-<script src="/assets/leaflet/leaflet.js"></script>
+<script src="assets/leaflet/leaflet.js"></script>
 
 <script>
     let map;

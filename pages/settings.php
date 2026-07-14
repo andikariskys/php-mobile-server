@@ -105,7 +105,7 @@ $terminal_port = db_get('terminal_port', '3001');
                 </div>
             <?php endif; ?>
             
-            <form action="/settings" method="POST">
+            <form action="index.php?page=settings" method="POST">
                 <input type="hidden" name="action" value="change_creds">
                 
                 <div class="mb-3">
@@ -145,7 +145,7 @@ $terminal_port = db_get('terminal_port', '3001');
                 </div>
             <?php endif; ?>
             
-            <form action="/settings" method="POST" enctype="multipart/form-data" class="mb-3">
+            <form action="index.php?page=settings" method="POST" enctype="multipart/form-data" class="mb-3">
                 <input type="hidden" name="action" value="upload_bg">
                 
                 <div class="mb-4">
@@ -162,7 +162,7 @@ $terminal_port = db_get('terminal_port', '3001');
             </form>
 
             <?php if (!empty($bg_path)): ?>
-                <form action="/settings" method="POST">
+                <form action="index.php?page=settings" method="POST">
                     <input type="hidden" name="action" value="reset_bg">
                     <button type="submit" class="btn btn-outline-danger px-4 py-2 rounded-10 w-100 fs-8">
                         Reset ke Latar Belakang Default
@@ -188,7 +188,7 @@ $terminal_port = db_get('terminal_port', '3001');
                 </div>
             <?php endif; ?>
             
-            <form action="/settings" method="POST">
+            <form action="index.php?page=settings" method="POST">
                 <input type="hidden" name="action" value="save_integration">
                 
                 <!-- IP Camera inputs split into Port and URL -->

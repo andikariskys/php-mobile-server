@@ -10,7 +10,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     if ($username === $db_user && $password === $db_pass) {
         $_SESSION['user_logged_in'] = true;
-        header("Location: /dashboard");
+        header("Location: index.php?page=dashboard");
         exit;
     } else {
         $error = 'Username atau Password salah!';
@@ -34,11 +34,11 @@ if ($bg_path) {
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <!-- Bootstrap CSS -->
-    <link rel="stylesheet" href="/assets/bootstrap/css/bootstrap.min.css">
+    <link rel="stylesheet" href="assets/bootstrap/css/bootstrap.min.css">
     <!-- Flaticon UIcons CSS -->
-    <link rel="stylesheet" href="/assets/flaticon/css/uicons-solid-rounded.css">
+    <link rel="stylesheet" href="assets/flaticon/css/uicons-solid-rounded.css">
     <!-- Custom Style CSS -->
-    <link rel="stylesheet" href="/assets/style.css">
+    <link rel="stylesheet" href="assets/style.css">
     
     <style>
         body {
@@ -76,7 +76,7 @@ if ($bg_path) {
                 </div>
             <?php endif; ?>
             
-            <form action="/login" method="POST">
+            <form action="index.php?page=login" method="POST">
                 <div class="text-start mb-3">
                     <label for="username" class="form-label text-secondary fs-7 ms-1">Username</label>
                     <div class="input-group">
@@ -111,6 +111,6 @@ if ($bg_path) {
     </div>
 
     <!-- Bootstrap Bundle JS -->
-    <script src="/assets/bootstrap/js/bootstrap.bundle.min.js"></script>
+    <script src="assets/bootstrap/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

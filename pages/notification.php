@@ -129,7 +129,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 // Sync ke backend session via fetch
                 const formData = new FormData();
                 formData.append('clear_id', id);
-                fetch('/notification', {
+                fetch('index.php?page=notification', {
                     method: 'POST',
                     body: formData
                 });
@@ -156,7 +156,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             // Sync ke backend session via fetch
             const formData = new FormData();
             formData.append('clear_all', '1');
-            fetch('/notification', {
+            fetch('index.php?page=notification', {
                 method: 'POST',
                 body: formData
             });

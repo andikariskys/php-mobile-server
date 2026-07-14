@@ -186,7 +186,7 @@ $vol_notification = db_get('volume_notification', '50');
         formData.append('volume_key', key);
         formData.append('volume_value', value);
         
-        fetch('/audio', {
+        fetch('index.php?page=audio', {
             method: 'POST',
             body: formData
         })

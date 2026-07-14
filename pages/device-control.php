@@ -136,7 +136,7 @@
                     toast.show();
                 } else {
                     alert(successMsg + "\n\n(Simulasi: Halaman akan memuat ulang)");
-                    window.location.href = '/login';
+                    window.location.href = 'index.php?page=login';
                 }
             }, 4000);
         }

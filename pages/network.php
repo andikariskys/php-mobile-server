@@ -11,7 +11,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
     db_set('use_prefix', $use_prefix);
     
     $_SESSION['net_success'] = 'Konfigurasi IP Statis berhasil disimpan!';
-    header("Location: /network");
+    header("Location: index.php?page=network");
     exit;
 }
 
@@ -150,7 +150,7 @@ $use_prefix_val = db_get('use_prefix', '0');
                 <h5 class="mb-0 text-white font-weight-600">Konfigurasi IP Statis</h5>
             </div>
             
-            <form id="ipForm" action="/network" method="POST">
+            <form id="ipForm" action="index.php?page=network" method="POST">
                 <input type="hidden" name="action" value="save_ip">
                 
                 <div class="row g-3 mb-3">

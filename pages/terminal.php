@@ -19,7 +19,7 @@ $is_ip = filter_var($host_only, FILTER_VALIDATE_IP) ||
             <p class="text-secondary fs-8 mb-4 mx-auto" style="max-width: 420px;">
                 Konfigurasi Port atau URL Domain Terminal belum diatur. Silakan buka halaman System Settings terlebih dahulu untuk mengaturnya.
             </p>
-            <a href="/settings" class="btn btn-primary-gradient px-4 py-2.5 rounded-10 text-white font-weight-600">
+            <a href="index.php?page=settings" class="btn btn-primary-gradient px-4 py-2.5 rounded-10 text-white font-weight-600">
                 Buka System Settings
             </a>
         </div>

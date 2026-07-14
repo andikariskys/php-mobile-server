@@ -102,7 +102,7 @@ usort($all_sms, function($a, $b) {
                 <h5 class="mb-0 text-white font-weight-600">Kirim SMS</h5>
             </div>
             
-            <form action="/sms" method="POST">
+            <form action="index.php?page=sms" method="POST">
                 <input type="hidden" name="send_sms" value="1">
                 
                 <div class="mb-3">

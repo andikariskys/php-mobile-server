@@ -2,107 +2,43 @@
 // Developer page displaying specific listen sockets information
 $sockets = $device->getListeningSockets();
 
-// Match common socket processes and apply categories/descriptions
-foreach ($sockets as &$sock) {
-    $name = strtolower($sock['process']);
-    $port = '';
-    
-    // Extract port from local address (e.g. 0.0.0.0:3000 or :::3306 or [::]:3306)
-    if (preg_match('/:(\d+)$/', $sock['local_address'], $matches)) {
-        $port = $matches[1];
-    }
-    
-    // Apply defaults
-    $sock['category'] = 'System Process';
-    $sock['desc'] = 'Layanan jaringan aktif pada perangkat.';
-    $sock['color'] = 'icon-primary';
-    $sock['icon'] = 'fi-sr-computer';
-
-    // Grouping / Categorization
-    if (strpos($name, 'node') !== false || $port === '3000' || $port === '5000') {
-        $sock['process'] = 'Node.js App';
-        $sock['category'] = 'Node.js Runtime';
-        $sock['desc'] = 'Aplikasi server Javascript (Node.js) runtime.';
-        $sock['color'] = 'icon-success';
-        $sock['icon'] = 'fi-sr-code-branch';
-    } elseif (strpos($name, 'python') !== false || $port === '8000') {
-        $sock['process'] = 'Python Server';
-        $sock['category'] = 'Python Runtime';
-        $sock['desc'] = 'Aplikasi / skrip server Python runtime.';
-        $sock['color'] = 'icon-primary';
-        $sock['icon'] = 'fi-sr-code';
-    } elseif (strpos($name, 'mysql') !== false || strpos($name, 'mariadb') !== false || strpos($name, 'mysqld') !== false || $port === '3306') {
-        $sock['process'] = 'MariaDB Database';
-        $sock['category'] = 'Database Server';
-        $sock['desc'] = 'Sistem manajemen database relasional MariaDB/MySQL.';
-        $sock['color'] = 'icon-info';
-        $sock['icon'] = 'fi-sr-database';
-    } elseif (strpos($name, 'redis') !== false || $port === '6379') {
-        $sock['process'] = 'Redis Cache';
-        $sock['category'] = 'Cache System';
-        $sock['desc'] = 'Penyimpanan struktur data memori kunci-nilai Redis.';
-        $sock['color'] = 'icon-danger';
-        $sock['icon'] = 'fi-sr-database';
-    } elseif (strpos($name, 'sshd') !== false || strpos($name, 'ssh') !== false || $port === '8022' || $port === '22') {
-        $sock['process'] = 'SSH Remote Shell';
-        $sock['category'] = 'Secure Access';
-        $sock['desc'] = 'Secure Shell Daemon untuk login terminal jarak jauh.';
-        $sock['color'] = 'icon-success';
-        $sock['icon'] = 'fi-sr-lock';
-    } elseif (strpos($name, 'ttyd') !== false || $port === '3001') {
-        $sock['process'] = 'Web Terminal';
-        $sock['category'] = 'Terminal Emulator';
-        $sock['desc'] = 'Layanan web terminal emulator interaktif (ttyd).';
-        $sock['color'] = 'icon-danger';
-        $sock['icon'] = 'fi-sr-terminal';
-    } elseif (strpos($name, 'php') !== false) {
-        $sock['process'] = 'PHP Web Server';
-        $sock['category'] = 'Web Server';
-        $sock['desc'] = 'Layanan utama antarmuka pengguna web php.';
-        $sock['color'] = 'icon-primary';
-        $sock['icon'] = 'fi-sr-computer';
-    } elseif (strpos($name, 'camera') !== false || strpos($name, 'ipcam') !== false || $port === '4444') {
-        $sock['process'] = 'IP Camera Service';
-        $sock['category'] = 'Media Server';
-        $sock['desc'] = 'Layanan streaming kamera perangkat mobile.';
-        $sock['color'] = 'icon-warning';
-        $sock['icon'] = 'fi-sr-camera';
-    }
-}
-unset($sock);
-
-// Default category template definitions for reference guide
+// Default port suggestions guide
 $default_categories = [
     [
-        'name' => 'Node.js Application',
+        'name' => 'Aplikasi Web PHP',
+        'port' => 'Port 8000 - 9000',
+        'icon' => 'fi-sr-rectangle-code',
+        'color' => 'icon-primary',
+        'desc' => 'Disarankan menggunakan port kisaran 8000-an atau 9000-an untuk aplikasi web berbasis PHP (misalnya: php -S localhost:8000).'
+    ],
+    [
+        'name' => 'Aplikasi Node.js',
         'port' => 'Port 3000 / 5000',
         'icon' => 'fi-sr-code-branch',
         'color' => 'icon-success',
-        'desc' => 'Dijalankan menggunakan node index.js atau pm2 start app.js'
+        'desc' => 'Umumnya menggunakan port 3000 atau 5000 untuk server Express, NestJS, Next.js, atau aplikasi runtime JavaScript lainnya.'
+    ],
+    [
+        'name' => 'Database MariaDB / MySQL',
+        'port' => 'Port 3306 / 3606',
+        'icon' => 'fi-sr-database',
+        'color' => 'icon-info',
+        'desc' => 'Sangat disarankan menggunakan port default 3306, atau port alternatif 3606 untuk menghindari konflik layanan database.'
     ],
     [
         'name' => 'Python Web Server',
         'port' => 'Port 8000 / 5000',
-        'icon' => 'fi-sr-code',
-        'color' => 'icon-primary',
-        'desc' => 'Dijalankan menggunakan python -m http.server atau Flask/FastAPI'
-    ],
-    [
-        'name' => 'MariaDB SQL Database',
-        'port' => 'Port 3306',
-        'icon' => 'fi-sr-database',
-        'color' => 'icon-info',
-        'desc' => 'Database SQL server, dijalankan lewat mariadb-safe atau mysqld'
-    ],
-    [
-        'name' => 'Redis Cache Service',
-        'port' => 'Port 6379',
-        'icon' => 'fi-sr-database',
-        'color' => 'icon-danger',
-        'desc' => 'In-memory cache server, dijalankan menggunakan redis-server'
+        'icon' => 'fi-sr-computer',
+        'color' => 'icon-warning',
+        'desc' => 'Biasanya berjalan pada port 8000 (Python http.server) atau port 5000 (Flask / FastAPI) saat dideploy.'
     ]
 ];
 ?>
+
+<!-- Information for cloudflared tunnel -->
+<div class="alert alert-primary bg-primary bg-opacity-10 border border-primary border-opacity-20 text-primary py-2.5 px-3 fs-8 mb-3 rounded-10 animated-fade-in" role="alert">
+    <span><i class="fi fi-sr-info me-2 align-middle"></i>Gunakan <strong>port ini pada cloudflared tunnel</strong> jika ingin mengonlinekan aplikasi atau agar dapat diakses secara publik.</span>
+</div>
 
 <div class="alert alert-info bg-info bg-opacity-10 border border-info border-opacity-20 text-info py-2.5 px-3 fs-8 mb-4 rounded-10 animated-fade-in" role="alert">
     <span><i class="fi fi-sr-info me-2 align-middle"></i>Daftar port aktif yang dikelola oleh user (Hasil perintah: <code>ss -lptn</code>)</span>
@@ -123,17 +59,15 @@ $default_categories = [
                 <div class="glass-card h-100 d-flex flex-column justify-content-between p-4">
                     <div>
                         <div class="d-flex align-items-center justify-content-between mb-3">
-                            <div class="icon-container <?= htmlspecialchars($sock['color']) ?> mb-0" style="width: 44px; height: 44px; font-size: 1.1rem;">
-                                <i class="fi <?= htmlspecialchars($sock['icon']) ?>"></i>
+                            <div class="icon-container icon-primary mb-0" style="width: 44px; height: 44px; font-size: 1.1rem;">
+                                <i class="fi fi-sr-network"></i>
                             </div>
                             <span class="badge bg-success bg-opacity-10 border border-success border-opacity-25 text-success px-2 py-1 fs-9">
                                 LISTEN (<?= strtoupper(htmlspecialchars($sock['protocol'])) ?>)
                             </span>
                         </div>
                         
-                        <h5 class="text-white font-weight-700 mb-0"><?= htmlspecialchars($sock['process']) ?></h5>
-                        <div class="fs-9 text-secondary font-weight-500 mb-2"><?= htmlspecialchars($sock['category']) ?></div>
-                        <p class="text-secondary fs-8 mb-4"><?= htmlspecialchars($sock['desc']) ?></p>
+                        <h5 class="text-white font-weight-700 mb-3 text-truncate" title="<?= htmlspecialchars($sock['process']) ?>"><?= htmlspecialchars($sock['process']) ?></h5>
                         
                         <div class="table-responsive">
                             <table class="table table-borderless text-white fs-8 mb-0">
@@ -164,7 +98,7 @@ $default_categories = [
 <div class="border-top border-white border-opacity-10 pt-4">
     <div class="d-flex align-items-center gap-2 mb-4">
         <i class="fi fi-sr-settings text-primary fs-5"></i>
-        <h5 class="mb-0 text-white font-weight-600">Panduan Kategori Port Default (Termux)</h5>
+        <h5 class="mb-0 text-white font-weight-600">Rekomendasi Penggunaan Port Layanan</h5>
     </div>
     
     <div class="row g-4">

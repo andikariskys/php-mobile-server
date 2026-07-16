@@ -133,7 +133,7 @@ if ($match) {
             check_auth();
         }
         
-        if ($uri === '/login') {
+        if ($uri === '/login' || (isset($_GET['api']) && $_GET['api'] == '1')) {
             include $handler;
         } else {
             $page_content_file = $handler;

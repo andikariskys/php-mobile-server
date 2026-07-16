@@ -228,10 +228,11 @@ class DeviceController {
             $uptimeData = file_get_contents('/proc/uptime');
             $parts = explode(' ', $uptimeData);
             $uptimeSecs = (float)$parts[0];
+            $uptimeSecsInt = (int)$uptimeSecs;
             
-            $days = floor($uptimeSecs / 86400);
-            $hours = floor(($uptimeSecs % 86400) / 3600);
-            $minutes = floor(($uptimeSecs % 3600) / 60);
+            $days = floor($uptimeSecsInt / 86400);
+            $hours = floor(($uptimeSecsInt % 86400) / 3600);
+            $minutes = floor(($uptimeSecsInt % 3600) / 60);
             
             if ($days > 0) {
                 $uptimeFormatted = "{$days}d {$hours}h {$minutes}m";
@@ -676,6 +677,7 @@ class DeviceController {
                 if ($ipRaw && preg_match('/inet\s+([^\s]+)/', $ipRaw, $matches)) {
                     $ip = $matches[1];
                 }
+                if ($ip === 'N/A') continue;
 
                 $rxFile = "$netDir/$file/statistics/rx_bytes";
                 $txFile = "$netDir/$file/statistics/tx_bytes";
@@ -706,11 +708,13 @@ class DeviceController {
     /**
      * 8. GET SMS LIST
      */
-    public function getSMSList($limit = 10) {
+    public function getSMSList($limit = 10, $offset = 0) {
         $limit = (int)$limit;
+        $offset = (int)$offset;
         $smsList = [];
 
-        $cmd = "content query --uri content://sms --projection _id,thread_id,address,date,read,type,body --limit $limit";
+        $totalToFetch = $limit + $offset;
+        $cmd = "content query --uri content://sms --projection _id,thread_id,address,date,read,type,body --limit $totalToFetch";
         $output = $this->exec($cmd, true);
         
         if ($output && strpos($output, 'Row:') !== false) {
@@ -735,10 +739,13 @@ class DeviceController {
                     ];
                 }
             }
+            if ($offset > 0) {
+                $smsList = array_slice($smsList, $offset, $limit);
+            }
         }
 
         if (empty($smsList) && $this->useTermuxApi) {
-            $json = $this->exec("termux-sms-list -l $limit", false, true);
+            $json = $this->exec("termux-sms-list -l $limit -o $offset", false, true);
             $data = json_decode($json, true);
             if (is_array($data)) {
                 $smsList = array_map(function($sms) {
@@ -1143,12 +1150,10 @@ class DeviceController {
         return true;
     }
 
-    /**
-     * Action: Toggle Mobile Data
-     */
     public function toggleMobileData($enable) {
+        $val = $enable ? '1' : '0';
         $cmdStr = $enable ? 'enable' : 'disable';
-        $this->exec("svc data $cmdStr", true);
+        $this->exec("svc data $cmdStr && settings put global mobile_data $val", true);
         return true;
     }
 
@@ -1216,17 +1221,29 @@ class DeviceController {
     public function capturePhoto($cameraId, $outputFile) {
         if ($this->useTermuxApi) {
             $fileName = basename($outputFile);
-            $tempFile = '/data/data/com.termux/files/home/temp_shutter.jpg';
+            $tempFile = '/sdcard/Pictures/temp_' . $fileName;
             $sdcardPath = '/sdcard/Pictures/' . $fileName;
 
             $cmd = "termux-camera-photo -c " . escapeshellarg($cameraId) . " " . escapeshellarg($tempFile) . 
                    " && cp " . escapeshellarg($tempFile) . " " . escapeshellarg($sdcardPath) . 
-                   " && mv " . escapeshellarg($tempFile) . " " . escapeshellarg($outputFile);
+                   " && mv " . escapeshellarg($tempFile) . " " . escapeshellarg($outputFile) .
+                   " && chmod 666 " . escapeshellarg($sdcardPath) .
+                   " && chmod 666 " . escapeshellarg($outputFile);
 
-            $this->exec($cmd, false, true);
-            return file_exists($outputFile);
+            $this->exec($cmd, true, true); // Run as root to ensure camera access and permission bypass
+            return file_exists($outputFile) && filesize($outputFile) > 0;
         }
         return false;
+    }
+
+    /**
+     * Action: Delete captured photo from SD Card storage
+     */
+    public function deletePhotoFromSdcard($fileName) {
+        $fileName = basename($fileName);
+        $sdcardPath = '/sdcard/Pictures/' . $fileName;
+        $this->exec("rm -f " . escapeshellarg($sdcardPath), true);
+        return true;
     }
 
     /**

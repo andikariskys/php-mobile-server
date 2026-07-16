@@ -168,7 +168,7 @@ $bluetoothLabelClass = ($bluetoothStatus === 'Enabled') ? 'text-success' : 'text
             <div class="p-3 bg-black bg-opacity-20 rounded-12 border border-white border-opacity-5 mb-3 d-flex align-items-center justify-content-between">
                 <div class="d-flex align-items-center gap-3">
                     <div class="icon-container icon-info mb-0" style="width: 40px; height: 40px; font-size: 1.1rem;">
-                        <i class="fi fi-sr-bluetooth" id="bluetoothIcon"></i>
+                        <i class="fi fi-sr-bluetooth-alt" id="bluetoothIcon"></i>
                     </div>
                     <div>
                         <h6 class="text-white mb-0">Bluetooth</h6>

@@ -53,7 +53,7 @@ $headerBatteryStatus = isset($headerBattery['status']) ? $headerBattery['status'
         <div class="sidebar-header d-flex flex-column align-items-start gap-0">
             <a href="index.php?page=dashboard" class="sidebar-brand">Mobile Server</a>
             <!-- Added Created by subtitle here -->
-            <span class="text-secondary" style="font-size: 0.725rem; margin-top: -2px;">Created by: <a href="http://www.andikariskys.my.id" target="_blank" class="text-secondary text-decoration-none hover-white">www.andikariskys.my.id</a></span>
+            <span class="text-secondary" style="font-size: 0.725rem; margin-top: -2px;">Created by: <a href="http://www.andikariskys.my.id" target="_blank" class="text-decoration-none blink-author">www.andikariskys.my.id</a></span>
         </div>
         
         <ul class="sidebar-menu">
@@ -249,6 +249,15 @@ $headerBatteryStatus = isset($headerBattery['status']) ? $headerBattery['status'
             0% { transform: scale(0.95); opacity: 0.5; }
             50% { transform: scale(1.1); opacity: 1; }
             100% { transform: scale(0.95); opacity: 0.5; }
+        }
+        @keyframes blink-green {
+            0% { opacity: 0.45; color: #22c55e; }
+            50% { opacity: 1; color: #4ade80; text-shadow: 0 0 6px rgba(34, 197, 94, 0.5); }
+            100% { opacity: 0.45; color: #22c55e; }
+        }
+        .blink-author {
+            animation: blink-green 2s infinite ease-in-out;
+            font-weight: 500;
         }
         .fs-7 { font-size: 0.8rem; }
     </style>

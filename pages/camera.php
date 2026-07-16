@@ -16,13 +16,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
     
     header('Content-Type: application/json');
     if ($res && file_exists($filePath)) {
+        $fileSizeVal = filesize($filePath);
         echo json_encode([
             'success' => true,
             'filename' => $fileName,
-            'device_path' => '/sdcard/Pictures/MobileServer/' . $fileName,
+            'device_path' => '/sdcard/Pictures/' . $fileName,
             'server_path' => realpath($filePath),
             'url' => 'assets/uploads/snapshots/' . $fileName,
-            'time' => date('d/m/Y H:i:s')
+            'time' => date('d/m/Y H:i:s'),
+            'size' => $fileSizeVal > 0 ? round($fileSizeVal / 1024, 1) . ' KB' : '0 KB'
         ]);
     } else {
         echo json_encode([
@@ -30,6 +32,53 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
             'message' => 'Gagal mengambil foto via Termux API.'
         ]);
     }
+    exit;
+}
+
+// Handle snapshot deletion
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'delete_snapshot') {
+    $filename = isset($_POST['filename']) ? basename($_POST['filename']) : '';
+    $uploadDir = __DIR__ . '/../assets/uploads/snapshots';
+    $filePath = $uploadDir . '/' . $filename;
+    
+    $success = false;
+    if (!empty($filename)) {
+        if (file_exists($filePath)) {
+            $success = unlink($filePath);
+        }
+        // Also delete from device storage
+        $device->deletePhotoFromSdcard($filename);
+    }
+    
+    header('Content-Type: application/json');
+    echo json_encode(['success' => $success]);
+    exit;
+}
+
+// Handle snapshot list fetch
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'get_snapshots') {
+    $uploadDir = __DIR__ . '/../assets/uploads/snapshots';
+    $snapshots = [];
+    if (is_dir($uploadDir)) {
+        $files = scandir($uploadDir);
+        foreach ($files as $file) {
+            if ($file === '.' || $file === '..') continue;
+            if (preg_match('/^IMG_.*\.jpg$/i', $file)) {
+                $filePath = $uploadDir . '/' . $file;
+                $snapshots[] = [
+                    'filename' => $file,
+                    'url' => 'assets/uploads/snapshots/' . $file,
+                    'time' => date('d/m/Y H:i:s', filemtime($filePath)),
+                    'size' => filesize($filePath) > 0 ? round(filesize($filePath) / 1024, 1) . ' KB' : '0 KB'
+                ];
+            }
+        }
+        usort($snapshots, function($a, $b) {
+            return strcmp($b['filename'], $a['filename']);
+        });
+    }
+    header('Content-Type: application/json');
+    echo json_encode(['success' => true, 'snapshots' => $snapshots]);
     exit;
 }
 
@@ -154,6 +203,20 @@ $cameras = $device->getCameraInfo();
                 </a>
             </div>
 
+            <!-- Notice/Information Box -->
+            <div class="alert alert-warning bg-warning bg-opacity-10 border border-warning border-opacity-20 text-warning rounded-10 fs-8 mt-4 mb-0 text-start">
+                <div class="d-flex gap-2">
+                    <i class="fi fi-sr-info mt-0.5" style="font-size: 1rem;"></i>
+                    <div>
+                        <strong>Keterbatasan Tool:</strong>
+                        <ul class="mb-0 mt-1 ps-3">
+                            <li>Foto yang diambil menggunakan rasio aspek <strong>3:4 Portrait</strong>.</li>
+                            <li>Pengambilan foto tidak mendukung penggunaan lampu kilat (flash).</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
             <!-- Hidden canvas used to generate mock photo based on simulated camera feed -->
             <canvas id="mock-canvas" class="d-none" width="1280" height="720"></canvas>
         </div>
@@ -168,10 +231,10 @@ $cameras = $device->getCameraInfo();
             </div>
             
             <div class="row g-4 align-items-center">
-                <div class="col-12 col-md-7">
-                    <!-- Large image box (16:9 Landscape) -->
-                    <div class="position-relative overflow-hidden rounded-12 border border-white border-opacity-10" style="aspect-ratio: 16/9; background: #000;">
-                        <img id="latestCaptureImg" src="" class="w-100 h-100 img-fluid" style="object-fit: cover;">
+                <div class="col-12 col-md-7 text-center">
+                    <!-- Large image box (3:4 Portrait) -->
+                    <div class="position-relative overflow-hidden rounded-12 border border-white border-opacity-10 mx-auto" style="aspect-ratio: 3/4; background: #000; max-height: 400px; width: 300px;">
+                        <img id="latestCaptureImg" src="" class="w-100 h-100" style="object-fit: cover;">
                     </div>
                 </div>
                 
@@ -189,8 +252,8 @@ $cameras = $device->getCameraInfo();
                                     <td class="text-end pe-0 py-2 font-weight-500 text-white" id="imgMetaTime">-</td>
                                 </tr>
                                 <tr class="border-bottom border-white border-opacity-5">
-                                    <td class="text-secondary ps-0 py-2">Resolusi</td>
-                                    <td class="text-end pe-0 py-2 font-weight-500 text-white">1280 x 720 (16:9)</td>
+                                    <td class="text-secondary ps-0 py-2">Ukuran File</td>
+                                    <td class="text-end pe-0 py-2 font-weight-500 text-white" id="imgMetaSize">-</td>
                                 </tr>
                                 <tr class="border-bottom border-white border-opacity-5">
                                     <td class="text-secondary ps-0 py-2">Lokasi Perangkat</td>
@@ -211,6 +274,25 @@ $cameras = $device->getCameraInfo();
         <div id="latestCapturePlaceholder" class="glass-card text-center py-5">
             <i class="fi fi-sr-folder text-secondary fs-1 mb-2 opacity-50"></i>
             <p class="text-secondary mb-0">Belum ada foto yang dijepret. Klik tombol <strong>Ambil Foto (Jepret)</strong> di atas untuk memotret.</p>
+        </div>
+
+        <!-- Snapshot Gallery/List Card -->
+        <div class="glass-card mt-4" id="snapshotsGalleryCard">
+            <div class="d-flex align-items-center justify-content-between mb-4">
+                <div class="d-flex align-items-center gap-2">
+                    <i class="fi fi-sr-images text-primary fs-5"></i>
+                    <h5 class="mb-0 text-white font-weight-600">Daftar Foto Tersimpan</h5>
+                </div>
+                <span class="badge bg-primary bg-opacity-10 border border-primary border-opacity-30 text-white px-3 py-1.5 rounded-pill fs-8" id="snapshotCountBadge">
+                    0 FOTO
+                </span>
+            </div>
+            
+            <div class="row g-3" id="snapshotsListContainer" style="max-height: 400px; overflow-y: auto; padding-right: 5px;">
+                <div class="col-12 text-center py-4 text-secondary fs-8">
+                    Mengambil daftar gambar...
+                </div>
+            </div>
         </div>
     </div>
 </div>
@@ -317,6 +399,7 @@ $cameras = $device->getCameraInfo();
         document.getElementById('camAlert').classList.remove('d-none');
         document.getElementById('camStreamCard').classList.remove('d-none');
         document.getElementById('camPreviewCardSection').classList.remove('d-none');
+        loadSnapshotsList();
     });
 
     function toggleCameraMode() {
@@ -335,6 +418,14 @@ $cameras = $device->getCameraInfo();
     }
 
     function captureIpCamPhoto() {
+        const iframe = document.getElementById('ipCamIframe');
+        const originalSrc = resolvedCameraUrl;
+        
+        // Disable camera stream iframe to release camera hardware
+        if (iframe) {
+            iframe.src = 'about:blank';
+        }
+
         const flash = document.getElementById('shutterFlash');
         if (flash) {
             flash.classList.add('flash-active');
@@ -351,34 +442,50 @@ $cameras = $device->getCameraInfo();
         formData.append('camera_id', camId);
         
         const querySep = window.location.search ? '&' : '?';
-        fetch(window.location.pathname + window.location.search + querySep + 'api=1', {
-            method: 'POST',
-            body: formData
-        })
-        .then(res => res.json())
-        .then(res => {
-            if (res.success) {
-                // Real capture succeeded
-                document.getElementById('latestCapturePlaceholder').classList.add('d-none');
-                document.getElementById('latestCaptureCard').style.display = 'block';
-                
-                const img = document.getElementById('latestCaptureImg');
-                img.src = res.url;
-                
-                document.getElementById('imgMetaName').textContent = res.filename;
-                document.getElementById('imgMetaTime').textContent = res.time;
-                document.getElementById('imgMetaDevicePath').textContent = res.device_path;
-                document.getElementById('imgMetaServerPath').textContent = res.server_path;
-            } else {
-                // Fallback to mock canvas if Termux fails
-                console.log(res.message);
+        
+        // Wait 800ms for browser and system to release hardware before capture
+        setTimeout(() => {
+            fetch(window.location.pathname + window.location.search + querySep + 'api=1', {
+                method: 'POST',
+                body: formData
+            })
+            .then(res => res.json())
+            .then(res => {
+                // Restore camera stream
+                if (iframe && originalSrc) {
+                    iframe.src = originalSrc;
+                }
+
+                if (res.success) {
+                    // Real capture succeeded
+                    document.getElementById('latestCapturePlaceholder').classList.add('d-none');
+                    document.getElementById('latestCaptureCard').style.display = 'block';
+                    
+                    const img = document.getElementById('latestCaptureImg');
+                    img.src = res.url;
+                    
+                    document.getElementById('imgMetaName').textContent = res.filename;
+                    document.getElementById('imgMetaTime').textContent = res.time;
+                    document.getElementById('imgMetaDevicePath').textContent = res.device_path;
+                    document.getElementById('imgMetaServerPath').textContent = res.server_path;
+                    document.getElementById('imgMetaSize').textContent = res.size || 'N/A';
+                    
+                    loadSnapshotsList();
+                } else {
+                    // Fallback to mock canvas if Termux fails
+                    console.log(res.message);
+                    captureMockPhoto();
+                }
+            })
+            .catch(err => {
+                // Restore camera stream even on failure
+                if (iframe && originalSrc) {
+                    iframe.src = originalSrc;
+                }
+                console.error('Fetch error:', err);
                 captureMockPhoto();
-            }
-        })
-        .catch(err => {
-            console.error('Fetch error:', err);
-            captureMockPhoto();
-        });
+            });
+        }, 800);
     }
 
     function captureMockPhoto() {
@@ -451,12 +558,117 @@ $cameras = $device->getCameraInfo();
         const dateStr = now.toLocaleDateString('id-ID', { day: '2-digit', month: '2-digit', year: 'numeric' }) + ' ' + now.toLocaleTimeString('id-ID');
         
         const fileName = `IMG_${now.getFullYear()}${String(now.getMonth()+1).padStart(2,'0')}${String(now.getDate()).padStart(2,'0')}_${timestamp.toString().slice(-6)}.jpg`;
-        const devicePath = `/storage/emulated/0/Pictures/MobileServer/${fileName}`;
+        const devicePath = `/sdcard/Pictures/${fileName}`;
         const serverPath = `D:\\mobile-server\\assets\\uploads\\snapshots\\${fileName}`;
         
         document.getElementById('imgMetaName').textContent = fileName;
         document.getElementById('imgMetaTime').textContent = dateStr;
         document.getElementById('imgMetaDevicePath').textContent = devicePath;
         document.getElementById('imgMetaServerPath').textContent = serverPath;
+        document.getElementById('imgMetaSize').textContent = '124.5 KB';
+
+        loadSnapshotsList();
+    }
+
+    function loadSnapshotsList() {
+        let formData = new FormData();
+        formData.append('action', 'get_snapshots');
+        
+        const querySep = window.location.search ? '&' : '?';
+        fetch(window.location.pathname + window.location.search + querySep + 'api=1', {
+            method: 'POST',
+            body: formData
+        })
+        .then(res => res.json())
+        .then(res => {
+            const container = document.getElementById('snapshotsListContainer');
+            const countBadge = document.getElementById('snapshotCountBadge');
+            if (!container) return;
+            
+            if (res.success && res.snapshots && res.snapshots.length > 0) {
+                countBadge.textContent = res.snapshots.length + ' FOTO';
+                let html = '';
+                res.snapshots.forEach(item => {
+                    const safeId = item.filename.replace(/[^a-zA-Z0-9_-]/g, '_');
+                    html += `
+                    <div class="col-6 col-sm-4 col-md-3 col-lg-2 animated-fade-in" id="snapshot-card-${safeId}">
+                        <div class="position-relative overflow-hidden rounded-10 border border-white border-opacity-10 bg-black bg-opacity-20 p-2 text-center h-100 d-flex flex-column justify-content-between">
+                            <div class="position-relative overflow-hidden rounded-8 mb-2" style="aspect-ratio: 3/4; background: #000;">
+                                <img src="${item.url}" class="w-100 h-100" style="object-fit: cover;">
+                            </div>
+                            <div>
+                                <div class="text-white text-truncate font-weight-500 fs-9 mb-1" style="font-size: 0.725rem;" title="${item.filename}">${item.filename}</div>
+                                <div class="text-secondary fs-9 mb-2" style="font-size: 0.7rem;">${item.size}</div>
+                            </div>
+                            <div class="d-flex gap-1 justify-content-center">
+                                <a href="${item.url}" download="${item.filename}" class="btn btn-sm btn-outline-info rounded-6 p-1 px-2 fs-9" title="Unduh">
+                                    <i class="fi fi-sr-download align-middle"></i>
+                                </a>
+                                <button class="btn btn-sm btn-outline-danger rounded-6 p-1 px-2 fs-9" onclick="deleteSnapshot('${item.filename}')" title="Hapus">
+                                    <i class="fi fi-sr-trash align-middle"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>`;
+                });
+                container.innerHTML = html;
+            } else {
+                countBadge.textContent = '0 FOTO';
+                container.innerHTML = `
+                <div class="col-12 text-center py-5 text-secondary fs-8">
+                    <i class="fi fi-sr-images fs-2 mb-2 opacity-50 d-block"></i>
+                    Belum ada foto yang tersimpan.
+                </div>`;
+            }
+        })
+        .catch(err => {
+            console.error('Load list error:', err);
+            const container = document.getElementById('snapshotsListContainer');
+            if (container) {
+                container.innerHTML = `
+                <div class="col-12 text-center py-4 text-danger fs-8">
+                    Gagal memuat daftar foto.
+                </div>`;
+            }
+        });
+    }
+
+    function deleteSnapshot(filename) {
+        if (!confirm('Apakah Anda yakin ingin menghapus foto ' + filename + '? (File di server dan penyimpanan internal akan dihapus)')) {
+            return;
+        }
+        
+        let formData = new FormData();
+        formData.append('action', 'delete_snapshot');
+        formData.append('filename', filename);
+        
+        const querySep = window.location.search ? '&' : '?';
+        fetch(window.location.pathname + window.location.search + querySep + 'api=1', {
+            method: 'POST',
+            body: formData
+        })
+        .then(res => res.json())
+        .then(res => {
+            if (res.success) {
+                const safeId = filename.replace(/[^a-zA-Z0-9_-]/g, '_');
+                const card = document.getElementById('snapshot-card-' + safeId);
+                if (card) {
+                    card.remove();
+                }
+                loadSnapshotsList();
+                
+                const metaName = document.getElementById('imgMetaName').textContent;
+                if (metaName === filename) {
+                    document.getElementById('latestCaptureCard').style.display = 'none';
+                    document.getElementById('latestCapturePlaceholder').classList.remove('d-none');
+                }
+            } else {
+                alert('Gagal menghapus gambar.');
+            }
+        })
+        .catch(err => {
+            console.error('Delete error:', err);
+            alert('Terjadi kesalahan saat menghapus gambar.');
+        });
     }
 </script>

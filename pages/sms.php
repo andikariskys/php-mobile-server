@@ -35,8 +35,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['send_sms'])) {
     }
 }
 
+// Pagination setup
+$page_num = isset($_GET['p']) ? max(1, (int)$_GET['p']) : 1;
+$limit = isset($_GET['limit']) ? ((int)$_GET['limit'] === 25 ? 25 : 10) : 10;
+$offset = ($page_num - 1) * $limit;
+
 // Fetch real SMS list from DeviceController
-$real_sms = $device->getSMSList(30);
+$real_sms = $device->getSMSList($limit, $offset);
 
 $all_sms = [];
 if (!empty($real_sms)) {
@@ -90,19 +95,27 @@ if (!empty($real_sms)) {
         ];
     }
 
+    $mock_all = [];
     if (isset($_SESSION['sms_inbox'])) {
         foreach ($_SESSION['sms_inbox'] as $msg) {
             $msg['type'] = 'inbox';
-            $all_sms[] = $msg;
+            $mock_all[] = $msg;
         }
     }
     if (isset($_SESSION['sms_sent'])) {
         foreach ($_SESSION['sms_sent'] as $msg) {
             $msg['type'] = 'sent';
             $msg['sender'] = $msg['recipient'];
-            $all_sms[] = $msg;
+            $mock_all[] = $msg;
         }
     }
+
+    // Sort all mock SMS by time descending
+    usort($mock_all, function($a, $b) {
+        return strcmp($b['time'], $a['time']);
+    });
+    
+    $all_sms = array_slice($mock_all, $offset, $limit);
 }
 
 // Sort all SMS by time descending
@@ -161,34 +174,61 @@ usort($all_sms, function($a, $b) {
 
     <!-- Unified SMS Feed List -->
     <div class="col-12 col-lg-7">
-        <div class="glass-card h-100">
-            <div class="d-flex align-items-center gap-2 mb-4">
-                <i class="fi fi-sr-envelope text-success fs-5"></i>
-                <h5 class="mb-0 text-white font-weight-600">Daftar Semua Pesan</h5>
-            </div>
-            
-            <div class="sms-list" style="max-height: 480px; overflow-y: auto; padding-right: 5px;">
-                <?php if (empty($all_sms)): ?>
-                    <div class="text-center py-5">
-                        <i class="fi fi-sr-envelope text-secondary fs-1 mb-2 opacity-50"></i>
-                        <p class="text-secondary mb-0">Tidak ada pesan SMS.</p>
-                    </div>
-                <?php else: ?>
-                    <?php foreach ($all_sms as $msg): ?>
-                        <div class="p-3 bg-black bg-opacity-20 rounded-12 border border-white border-opacity-5 mb-3 animated-fade-in">
-                            <div class="d-flex align-items-center justify-content-between mb-2">
-                                <div class="d-flex align-items-center gap-2">
-                                    <span class="badge <?= $msg['type'] === 'inbox' ? 'bg-success bg-opacity-10 border border-success border-opacity-25 text-success' : 'bg-primary bg-opacity-10 border border-primary border-opacity-25 text-white' ?> px-2 py-0.5 fs-9" style="font-size:0.65rem;">
-                                        <?= $msg['type'] === 'inbox' ? 'MASUK' : 'TERKIRIM' ?>
-                                    </span>
-                                    <span class="text-white font-weight-600 fs-7"><?= htmlspecialchars($msg['sender']) ?></span>
-                                </div>
-                                <span class="fs-9 text-secondary" style="font-size:0.7rem;"><?= $msg['time'] ?></span>
-                            </div>
-                            <p class="text-secondary fs-8 mb-0" style="white-space: pre-wrap; line-height: 1.4;"><?= htmlspecialchars($msg['message']) ?></p>
+        <div class="glass-card d-flex flex-column justify-content-between h-100">
+            <div>
+                <div class="d-flex align-items-center gap-2 mb-4">
+                    <i class="fi fi-sr-envelope text-success fs-5"></i>
+                    <h5 class="mb-0 text-white font-weight-600">Daftar Semua Pesan</h5>
+                </div>
+                
+                <div class="sms-list" style="max-height: 480px; overflow-y: auto; padding-right: 5px;">
+                    <?php if (empty($all_sms)): ?>
+                        <div class="text-center py-5">
+                            <i class="fi fi-sr-envelope text-secondary fs-1 mb-2 opacity-50"></i>
+                            <p class="text-secondary mb-0">Tidak ada pesan SMS.</p>
                         </div>
-                    <?php endforeach; ?>
-                <?php endif; ?>
+                    <?php else: ?>
+                        <?php foreach ($all_sms as $msg): ?>
+                            <div class="p-3 bg-black bg-opacity-20 rounded-12 border border-white border-opacity-5 mb-3 animated-fade-in">
+                                <div class="d-flex align-items-center justify-content-between mb-2">
+                                    <div class="d-flex align-items-center gap-2">
+                                        <span class="badge <?= $msg['type'] === 'inbox' ? 'bg-success bg-opacity-10 border border-success border-opacity-25 text-success' : 'bg-primary bg-opacity-10 border border-primary border-opacity-25 text-white' ?> px-2 py-0.5 fs-9" style="font-size:0.65rem;">
+                                            <?= $msg['type'] === 'inbox' ? 'MASUK' : 'TERKIRIM' ?>
+                                        </span>
+                                        <span class="text-white font-weight-600 fs-7"><?= htmlspecialchars($msg['sender']) ?></span>
+                                    </div>
+                                    <span class="fs-9 text-secondary" style="font-size:0.7rem;"><?= $msg['time'] ?></span>
+                                </div>
+                                <p class="text-secondary fs-8 mb-0" style="white-space: pre-wrap; line-height: 1.4;"><?= htmlspecialchars($msg['message']) ?></p>
+                            </div>
+                        <?php endforeach; ?>
+                    <?php endif; ?>
+                </div>
+            </div>
+
+            <!-- Pagination Controls -->
+            <div class="d-flex align-items-center justify-content-between pt-3 mt-3 border-top border-white border-opacity-10">
+                <div class="d-flex align-items-center gap-2">
+                    <span class="text-secondary fs-8">Tampilkan:</span>
+                    <select class="form-select form-select-sm form-glass py-0.5 px-2 fs-8" id="limitSelect" style="width: auto; height: auto;" onchange="changeLimit(this.value)">
+                        <option value="10" <?= $limit === 10 ? 'selected' : '' ?>>10</option>
+                        <option value="25" <?= $limit === 25 ? 'selected' : '' ?>>25</option>
+                    </select>
+                </div>
+                
+                <div class="d-flex gap-2">
+                    <a href="index.php?page=sms&p=<?= max(1, $page_num - 1) ?>&limit=<?= $limit ?>" 
+                       class="btn btn-sm btn-outline-light rounded-8 fs-8 px-3 <?= $page_num <= 1 ? 'disabled' : '' ?>">
+                        <i class="fi fi-sr-angle-left align-middle me-1"></i> Sebelum
+                    </a>
+                    
+                    <span class="text-white fs-8 align-self-center px-1">Hal. <?= $page_num ?></span>
+                    
+                    <a href="index.php?page=sms&p=<?= $page_num + 1 ?>&limit=<?= $limit ?>" 
+                       class="btn btn-sm btn-outline-light rounded-8 fs-8 px-3 <?= count($all_sms) < $limit ? 'disabled' : '' ?>">
+                        Lanjut <i class="fi fi-sr-angle-right align-middle ms-1"></i>
+                    </a>
+                </div>
             </div>
         </div>
     </div>
@@ -206,6 +246,10 @@ usort($all_sms, function($a, $b) {
             charCount.textContent = `${count} / 160 Karakter`;
             charCount.nextElementSibling.textContent = `${smsPages} SMS`;
         });
+    }
+
+    function changeLimit(val) {
+        window.location.href = 'index.php?page=sms&p=1&limit=' + val;
     }
 </script>
 

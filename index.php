@@ -69,7 +69,7 @@ if (isset($routes[$page])) {
         check_auth();
     }
     
-    if ($page === 'login') {
+    if ($page === 'login' || (isset($_GET['api']) && $_GET['api'] == '1')) {
         include $handler;
     } else {
         $page_content_file = $handler;

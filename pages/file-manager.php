@@ -11,7 +11,7 @@
             <button class="btn btn-glass" onclick="loadTab('termux', 'filemanager/tinyfilemanager.php?p=data%2Fdata%2Fcom.termux%2Ffiles%2Fhome')" id="tab-termux">
                 <i class="fi fi-sr-terminal me-2 align-middle"></i> Termux Home
             </button>
-            <button class="btn btn-glass" onclick="loadTab('www', 'filemanager/tinyfilemanager.php?p=data%2Fadb%2Fphp7%2Ffiles%2Fwww')" id="tab-www">
+            <button class="btn btn-glass" onclick="loadTab('www', 'filemanager/tinyfilemanager.php?p=sdcard%2Fphp-mobile-server')" id="tab-www">
                 <i class="fi fi-sr-globe me-2 align-middle"></i> www (Webroot)
             </button>
         </div>

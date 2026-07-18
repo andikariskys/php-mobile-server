@@ -14,4 +14,16 @@ Aplikasi WebUI berbasis PHP dan SQLite yang dirancang untuk berjalan sebagai mod
 
 ## Petunjuk Instalasi
 
-Sekk... developer'e lagi males gae dokumentasi hehehe... 
+Sekk... developer'e lagi males gawe dokumentasi hehehe... 
+
+# Dukung Pengembangan Proyek
+
+Jika proyek ini bermanfaat dan membantu pekerjaan Anda, Anda dapat memberikan dukungan agar pengembangan dan pemeliharaan proyek dapat terus berlanjut.
+
+Klik tautan di bawah ini untuk memberikan dukungan:
+
+[https://saweria.co/andikarisky](https://saweria.co/andikarisky)
+
+Setiap dukungan, sekecil apa pun, sangat berarti dan membantu menjaga proyek ini tetap aktif dikembangkan.
+
+Terima kasih atas apresiasi dan dukungan Anda!
